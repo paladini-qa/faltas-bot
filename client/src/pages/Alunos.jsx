@@ -93,12 +93,16 @@ export default function Alunos() {
 
   async function confirmBulkDelete() {
     const ids = [...selected];
-    await api.deleteAlunosBulk(ids);
-    setAlunos(prev => prev.filter(a => !selected.has(a.id)));
-    const count = ids.length;
-    toast.success(`${count} aluno${count !== 1 ? 's' : ''} excluído${count !== 1 ? 's' : ''}`);
-    setSelected(new Set());
-    setConfirmBulk(false);
+    try {
+      await api.deleteAlunosBulk(ids);
+      setAlunos(prev => prev.filter(a => !ids.includes(a.id)));
+      toast.success(`${ids.length} aluno${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''}`);
+      setSelected(new Set());
+      setConfirmBulk(false);
+    } catch (e) {
+      toast.error(e.message || 'Erro ao excluir alunos');
+      setConfirmBulk(false);
+    }
   }
 
   function toggleSelect(id) {
