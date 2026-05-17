@@ -42,6 +42,7 @@ export default function Alunos() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const [confirmState, setConfirmState] = useState({ open: false, alunoId: null, alunoNome: '' });
+  const [confirmBulk, setConfirmBulk] = useState(false);
   const { toasts, toast } = useToast();
   const [selected, setSelected] = useState(new Set());
 
@@ -90,6 +91,16 @@ export default function Alunos() {
     setConfirmState({ open: false, alunoId: null, alunoNome: '' });
   }
 
+  async function confirmBulkDelete() {
+    const ids = [...selected];
+    await api.deleteAlunosBulk(ids);
+    setAlunos(prev => prev.filter(a => !selected.has(a.id)));
+    const count = ids.length;
+    toast.success(`${count} aluno${count !== 1 ? 's' : ''} excluído${count !== 1 ? 's' : ''}`);
+    setSelected(new Set());
+    setConfirmBulk(false);
+  }
+
   function toggleSelect(id) {
     setSelected(prev => {
       const next = new Set(prev);
@@ -113,6 +124,12 @@ export default function Alunos() {
       message={`Excluir "${confirmState.alunoNome}"? Todos os dados associados serão removidos.`}
       onConfirm={confirmDelete}
       onCancel={() => setConfirmState({ open: false, alunoId: null, alunoNome: '' })}
+    />
+    <ConfirmModal
+      open={confirmBulk}
+      message={`Excluir ${selected.size} aluno${selected.size !== 1 ? 's' : ''} selecionado${selected.size !== 1 ? 's' : ''}? Todos os dados associados serão removidos.`}
+      onConfirm={confirmBulkDelete}
+      onCancel={() => setConfirmBulk(false)}
     />
     <Toast toasts={toasts} />
     <div className="p-6 space-y-4">
@@ -171,6 +188,26 @@ export default function Alunos() {
       </div>
 
       {error && <p className="text-red-600">{error}</p>}
+
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm">
+          <span className="font-medium text-red-700">
+            {selected.size} selecionado{selected.size !== 1 ? 's' : ''}
+          </span>
+          <button
+            onClick={() => setConfirmBulk(true)}
+            className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors"
+          >
+            Excluir selecionados
+          </button>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="px-3 py-1 text-slate-600 border border-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
+          >
+            Limpar seleção
+          </button>
+        </div>
+      )}
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
