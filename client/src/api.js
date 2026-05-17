@@ -47,4 +47,65 @@ export const api = {
 
   enviarAlertas: () =>
     fetch(`${BASE}/alertas/enviar`, { method: 'POST' }).then(json),
+
+  configuracoes: () => fetch(`${BASE}/configuracoes`).then(json),
+
+  saveConfiguracoes: (data) =>
+    fetch(`${BASE}/configuracoes`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(json),
+
+  enviarMensagemManual: (data) =>
+    fetch(`${BASE}/mensagens/enviar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(json),
+
+  updateAluno: (id, data) =>
+    fetch(`${BASE}/alunos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(json),
+
+  deleteAluno: (id) =>
+    fetch(`${BASE}/alunos/${id}`, { method: 'DELETE' }).then(r => {
+      if (!r.ok && r.status !== 204) throw new Error(r.statusText);
+    }),
+
+  deleteAlunosBulk: (ids) =>
+    fetch(`${BASE}/alunos/bulk-delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    }).then(r => {
+      if (!r.ok && r.status !== 204) throw new Error(r.statusText);
+    }),
+
+  updateResponsavel: (id, data) =>
+    fetch(`${BASE}/responsaveis/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(json),
+
+  updateFalta: (id, data) =>
+    fetch(`${BASE}/faltas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).then(json),
+
+  deleteFalta: (id) =>
+    fetch(`${BASE}/faltas/${id}`, { method: 'DELETE' }).then(r => {
+      if (!r.ok && r.status !== 204) throw new Error(r.statusText);
+    }),
+
+  deleteAlerta: (id) =>
+    fetch(`${BASE}/alertas/${id}`, { method: 'DELETE' }).then(r => {
+      if (!r.ok && r.status !== 204) throw new Error(r.statusText);
+    }),
 };
