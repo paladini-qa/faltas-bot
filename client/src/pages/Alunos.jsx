@@ -198,7 +198,7 @@ export default function Alunos() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={7} />)
+                Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={8} />)
               ) : alunos.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
