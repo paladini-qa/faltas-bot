@@ -39,6 +39,18 @@ async function initSchema() {
       tipo_alerta TEXT    NOT NULL,
       enviado_em  TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS configuracoes (
+      chave TEXT PRIMARY KEY,
+      valor TEXT NOT NULL
+    );
+
+    INSERT INTO configuracoes (chave, valor) VALUES
+      ('threshold_consecutivas', '3'),
+      ('threshold_mensal', '5'),
+      ('template_consecutivas', 'Olá {responsavel}! Tudo bem? Notamos que {aluno} possui {faltas} faltas consecutivas. Entre em contato com a escola para mais informações.'),
+      ('template_mensal', 'Olá {responsavel}! Tudo bem? Notamos que {aluno} possui {faltas} faltas no período de 1 mês. Entre em contato com a escola para mais informações.')
+    ON CONFLICT (chave) DO NOTHING;
   `);
 }
 
@@ -196,6 +208,63 @@ async function getFiltros() {
   return result.rows[0];
 }
 
+async function getConfiguracoes() {
+  const result = await pool.query('SELECT chave, valor FROM configuracoes');
+  return Object.fromEntries(result.rows.map(r => [r.chave, r.valor]));
+}
+
+async function saveConfiguracoes(data) {
+  for (const [chave, valor] of Object.entries(data)) {
+    await pool.query(
+      'INSERT INTO configuracoes (chave, valor) VALUES ($1, $2) ON CONFLICT (chave) DO UPDATE SET valor = $2',
+      [chave, String(valor)]
+    );
+  }
+}
+
+async function updateAluno(id, { nome, turma, serie, curso, numero }) {
+  const result = await pool.query(
+    `UPDATE alunos SET nome=$1, turma=$2, serie=$3, curso=$4, numero=$5 WHERE id=$6 RETURNING *`,
+    [nome, turma ?? '', serie ?? '', curso ?? '', numero ?? null, id]
+  );
+  return result.rows[0] || null;
+}
+
+async function deleteAluno(id) {
+  const result = await pool.query('DELETE FROM alunos WHERE id=$1', [id]);
+  return result.rowCount > 0;
+}
+
+async function deleteAlunosBulk(ids) {
+  await pool.query('DELETE FROM alunos WHERE id = ANY($1)', [ids]);
+}
+
+async function updateResponsavel(id, { nome, telefone }) {
+  const result = await pool.query(
+    'UPDATE responsaveis SET nome=$1, telefone=$2 WHERE id=$3 RETURNING *',
+    [nome, telefone, id]
+  );
+  return result.rows[0] || null;
+}
+
+async function updateFalta(id, { data, disciplina, justificada }) {
+  const result = await pool.query(
+    `UPDATE faltas SET data=$1, disciplina=$2, justificada=$3 WHERE id=$4 RETURNING *`,
+    [data, disciplina ?? '', justificada ?? false, id]
+  );
+  return result.rows[0] || null;
+}
+
+async function deleteFalta(id) {
+  const result = await pool.query('DELETE FROM faltas WHERE id=$1', [id]);
+  return result.rowCount > 0;
+}
+
+async function deleteAlerta(id) {
+  const result = await pool.query('DELETE FROM alertas_enviados WHERE id=$1', [id]);
+  return result.rowCount > 0;
+}
+
 module.exports = {
   pool,
   initSchema,
@@ -209,4 +278,13 @@ module.exports = {
   deleteResponsavel,
   getAlertas,
   getFiltros,
+  getConfiguracoes,
+  saveConfiguracoes,
+  updateAluno,
+  deleteAluno,
+  deleteAlunosBulk,
+  updateResponsavel,
+  updateFalta,
+  deleteFalta,
+  deleteAlerta,
 };
