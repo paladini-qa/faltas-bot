@@ -1,0 +1,106 @@
+<h2>Página de Alunos — redesign</h2>
+<p class="subtitle">Table rows highlight risk level; click anywhere on a row to open the student</p>
+
+<div class="mockup" style="max-width:800px;margin:0 auto">
+  <div class="mockup-header">Alunos (inside sidebar shell)</div>
+  <div class="mockup-body" style="padding:20px;background:#f8fafc;font-size:12px">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#0f172a">Alunos</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px">142 alunos · 23 em risco</div>
+      </div>
+    </div>
+
+    <!-- Filters bar -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;gap:6px;flex:1;max-width:220px">
+        <span style="color:#94a3b8;font-size:13px">🔍</span>
+        <span style="color:#94a3b8;font-size:11px">Buscar por nome...</span>
+      </div>
+      <select style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:11px;color:#475569;outline:none">
+        <option>Turma: Todas</option>
+      </select>
+      <select style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:11px;color:#475569;outline:none">
+        <option>Série: Todas</option>
+      </select>
+      <select style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:11px;color:#475569;outline:none">
+        <option>Curso: Todos</option>
+      </select>
+      <!-- Risk filter chips -->
+      <div style="display:flex;gap:6px;align-items:center">
+        <span style="background:#fee2e2;color:#dc2626;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:600;cursor:pointer">🔴 Alto risco</span>
+        <span style="background:#fff7ed;color:#c2410c;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:600;cursor:pointer">🟠 Em risco</span>
+        <span style="background:#f0fdf4;color:#16a34a;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:600;cursor:pointer">🟢 Regular</span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+      <!-- Header -->
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 90px;background:#f1f5f9;padding:8px 14px;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #e2e8f0">
+        <span>Nome</span>
+        <span>Turma</span>
+        <span>Série</span>
+        <span>Faltas inj.</span>
+        <span>Responsáveis</span>
+        <span>Status</span>
+      </div>
+
+      <!-- Row — alto risco -->
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 90px;padding:10px 14px;border-left:3px solid #dc2626;background:#fff5f5;align-items:center;border-bottom:1px solid #fee2e2;cursor:pointer">
+        <span style="font-weight:600;color:#0f172a">João da Silva</span>
+        <span style="color:#64748b">Turma A</span>
+        <span style="color:#64748b">3º ano</span>
+        <span style="font-weight:700;color:#dc2626;font-size:14px">14</span>
+        <span style="background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:500;display:inline-block">1 cadastrado</span>
+        <span style="background:#fee2e2;color:#dc2626;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;display:inline-block">Alto risco</span>
+      </div>
+
+      <!-- Row — alto risco -->
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 90px;padding:10px 14px;border-left:3px solid #dc2626;background:#fff5f5;align-items:center;border-bottom:1px solid #fee2e2;cursor:pointer">
+        <span style="font-weight:600;color:#0f172a">Maria Souza</span>
+        <span style="color:#64748b">Turma B</span>
+        <span style="color:#64748b">2º ano</span>
+        <span style="font-weight:700;color:#dc2626;font-size:14px">11</span>
+        <span style="background:#fef2f2;color:#dc2626;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:500;display:inline-block">Sem responsável</span>
+        <span style="background:#fee2e2;color:#dc2626;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;display:inline-block">Alto risco</span>
+      </div>
+
+      <!-- Row — em risco -->
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 90px;padding:10px 14px;border-left:3px solid #f97316;background:#fffbf5;align-items:center;border-bottom:1px solid #fed7aa;cursor:pointer">
+        <span style="font-weight:600;color:#0f172a">Carlos Lima</span>
+        <span style="color:#64748b">Turma C</span>
+        <span style="color:#64748b">1º ano</span>
+        <span style="font-weight:700;color:#c2410c;font-size:14px">8</span>
+        <span style="background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:500;display:inline-block">2 cadastrados</span>
+        <span style="background:#fff7ed;color:#c2410c;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;display:inline-block">Em risco</span>
+      </div>
+
+      <!-- Row — regular -->
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 90px;padding:10px 14px;border-left:3px solid transparent;background:white;align-items:center;border-bottom:1px solid #f1f5f9;cursor:pointer">
+        <span style="font-weight:600;color:#0f172a">Ana Pereira</span>
+        <span style="color:#64748b">Turma A</span>
+        <span style="color:#64748b">3º ano</span>
+        <span style="font-weight:600;color:#475569;font-size:14px">2</span>
+        <span style="background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:500;display:inline-block">1 cadastrado</span>
+        <span style="background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;display:inline-block">Regular</span>
+      </div>
+
+      <!-- Row — regular, no guardian -->
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 100px 100px 90px;padding:10px 14px;border-left:3px solid transparent;background:white;align-items:center;cursor:pointer">
+        <span style="font-weight:600;color:#0f172a">Pedro Rocha</span>
+        <span style="color:#64748b">Turma B</span>
+        <span style="color:#64748b">1º ano</span>
+        <span style="font-weight:600;color:#475569;font-size:14px">1</span>
+        <span style="background:#fef2f2;color:#dc2626;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:500;display:inline-block">Sem responsável</span>
+        <span style="background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:600;display:inline-block">Regular</span>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:#94a3b8;margin-top:8px">142 alunos · clique em qualquer linha para ver detalhes</div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:20px">Key changes: left border color indicates risk, row background tinted, risk filter chips, "Ver" button removed (whole row is clickable). Does this work?</p>

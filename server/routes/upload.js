@@ -1,0 +1,36 @@
+const router = require('express').Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { importarPdf } = require('../../src/importar');
+
+const upload = multer({
+  dest: path.resolve(__dirname, '../../data/uploads'),
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf' || file.originalname.endsWith('.pdf')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas arquivos PDF são aceitos'));
+    }
+  },
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
+
+router.post('/', upload.single('pdf'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+
+  const originalName = req.file.originalname.replace(/\.pdf$/i, '');
+  const destPath = path.join(req.file.destination, `${originalName}.pdf`);
+
+  try {
+    fs.renameSync(req.file.path, destPath);
+    const result = await importarPdf(destPath);
+    res.json(result);
+  } catch (err) {
+    if (fs.existsSync(destPath)) fs.unlinkSync(destPath);
+    else if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(422).json({ error: err.message });
+  }
+});
+
+module.exports = router;

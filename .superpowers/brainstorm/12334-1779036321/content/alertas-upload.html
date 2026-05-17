@@ -1,0 +1,91 @@
+<h2>Alertas &amp; Upload — polished versions</h2>
+<p class="subtitle">Minimal changes — both pages work well, just refined</p>
+
+<div class="split" style="gap:20px;align-items:flex-start">
+
+  <!-- ALERTAS -->
+  <div class="mockup">
+    <div class="mockup-header">Alertas</div>
+    <div class="mockup-body" style="padding:16px;background:#f8fafc;font-size:11px">
+
+      <!-- WhatsApp status bar — prominent -->
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:8px;height:8px;background:#22c55e;border-radius:50%;display:inline-block"></span>
+          <span style="font-weight:600;color:#166534">WhatsApp conectado</span>
+        </div>
+        <button style="background:#4f46e5;color:white;border:none;padding:6px 12px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer">Verificar e Enviar Alertas</button>
+      </div>
+
+      <!-- Result feedback (after sending) -->
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:10px;color:#1e40af">
+        ✅ <strong>3 alertas enviados:</strong> João da Silva (5 faltas/30d), Maria Souza (consecutivas), Carlos Lima (consecutivas)
+      </div>
+
+      <!-- Table -->
+      <div style="background:white;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1.2fr 1.2fr;background:#f1f5f9;padding:7px 12px;font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid #e2e8f0">
+          <span>Aluno</span><span>Turma</span><span>Tipo</span><span>Enviado em</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1.2fr 1.2fr;padding:8px 12px;border-bottom:1px solid #f1f5f9;align-items:center">
+          <span style="color:#4f46e5;font-weight:600">João da Silva</span>
+          <span style="color:#64748b">Turma A</span>
+          <span style="background:#eff6ff;color:#1d4ed8;padding:1px 6px;border-radius:999px;font-size:9px;font-weight:600;display:inline-block">5 em 30d</span>
+          <span style="color:#94a3b8">17/05 09:12</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1.2fr 1.2fr;padding:8px 12px;border-bottom:1px solid #f1f5f9;align-items:center">
+          <span style="color:#4f46e5;font-weight:600">Maria Souza</span>
+          <span style="color:#64748b">Turma B</span>
+          <span style="background:#fff7ed;color:#c2410c;padding:1px 6px;border-radius:999px;font-size:9px;font-weight:600;display:inline-block">3 consecutivas</span>
+          <span style="color:#94a3b8">17/05 09:12</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1.2fr 1.2fr;padding:8px 12px;align-items:center">
+          <span style="color:#4f46e5;font-weight:600">Carlos Lima</span>
+          <span style="color:#64748b">Turma C</span>
+          <span style="background:#fff7ed;color:#c2410c;padding:1px 6px;border-radius:999px;font-size:9px;font-weight:600;display:inline-block">3 consecutivas</span>
+          <span style="color:#94a3b8">15/05 14:30</span>
+        </div>
+      </div>
+      <div style="font-size:9px;color:#94a3b8;margin-top:6px">Tipo de alerta agora é um badge colorido, não texto puro</div>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="mockup">
+    <div class="mockup-header">Importar PDF</div>
+    <div class="mockup-body" style="padding:16px;background:#f8fafc;font-size:11px">
+
+      <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">Importar PDF</div>
+      <div style="font-size:10px;color:#64748b;margin-bottom:14px">Faça upload do relatório de frequência exportado pelo sistema escolar.</div>
+
+      <!-- Drop zone -->
+      <div style="border:2px dashed #c7d2fe;border-radius:14px;padding:32px 16px;text-align:center;background:#fafbff;cursor:pointer;margin-bottom:14px">
+        <div style="font-size:28px;margin-bottom:8px">📄</div>
+        <div style="font-weight:600;color:#0f172a;margin-bottom:3px">Arraste o PDF aqui</div>
+        <div style="font-size:10px;color:#64748b;margin-bottom:10px">ou clique para selecionar · até 20 MB</div>
+        <button style="background:#4f46e5;color:white;border:none;padding:7px 16px;border-radius:7px;font-size:11px;font-weight:600">Selecionar arquivo</button>
+      </div>
+
+      <!-- Result card (after upload) -->
+      <div style="background:white;border:1px solid #bbf7d0;border-radius:10px;overflow:hidden">
+        <div style="background:#f0fdf4;padding:10px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #bbf7d0">
+          <span>✅</span>
+          <span style="font-weight:600;color:#166534">Importação concluída!</span>
+        </div>
+        <div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:4px">
+          <span style="color:#64748b">Disciplina</span><span style="font-weight:500;color:#0f172a">Matemática</span>
+          <span style="color:#64748b">Turma / Série</span><span style="font-weight:500;color:#0f172a">Turma A · 3º ano</span>
+          <span style="color:#64748b">Alunos</span><span style="font-weight:500;color:#0f172a">28 (3 novos)</span>
+          <span style="color:#64748b">Faltas salvas</span><span style="font-weight:700;color:#dc2626">47</span>
+        </div>
+        <div style="padding:8px 14px;border-top:1px solid #f0fdf4">
+          <a style="font-size:10px;color:#4f46e5;font-weight:600">Ver alunos afetados →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:20px">Changes: WhatsApp status is a prominent green bar; alert type is a colored badge; upload result has a "Ver alunos afetados" link. Does this look right?</p>

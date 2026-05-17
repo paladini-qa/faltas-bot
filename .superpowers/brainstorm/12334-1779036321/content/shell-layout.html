@@ -1,0 +1,98 @@
+<h2>App shell — Sidebar layout</h2>
+<p class="subtitle">How the overall structure changes from top-nav to left sidebar</p>
+
+<div class="split" style="gap:24px;align-items:flex-start">
+  <!-- BEFORE -->
+  <div class="mockup">
+    <div class="mockup-header">Before — Top navbar</div>
+    <div class="mockup-body" style="padding:0;overflow:hidden;border-radius:0 0 8px 8px">
+      <div style="background:#4338ca;color:white;padding:12px 16px;display:flex;align-items:center;gap:16px;font-size:12px">
+        <span style="font-weight:700;font-size:13px">Faltas Bot</span>
+        <span style="opacity:0.7">Dashboard</span>
+        <span style="opacity:0.7">Alunos</span>
+        <span style="opacity:0.7">Importar PDF</span>
+        <span style="opacity:0.7">Alertas</span>
+      </div>
+      <div style="padding:16px;background:#f9fafb;min-height:160px">
+        <div style="font-size:13px;font-weight:600;color:#111;margin-bottom:12px">Dashboard</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:#1d4ed8;margin-bottom:2px">Total alunos</div>
+            <div style="font-size:20px;font-weight:700;color:#1e40af">142</div>
+          </div>
+          <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:#c2410c;margin-bottom:2px">Faltas inj.</div>
+            <div style="font-size:20px;font-weight:700;color:#9a3412">387</div>
+          </div>
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:#dc2626;margin-bottom:2px">Em risco</div>
+            <div style="font-size:20px;font-weight:700;color:#991b1b">23</div>
+          </div>
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px">
+            <div style="font-size:10px;color:#16a34a;margin-bottom:2px">Alertas</div>
+            <div style="font-size:20px;font-weight:700;color:#15803d">45</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:#9ca3af">↑ Content continues below the fold...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER -->
+  <div class="mockup" style="border-color:#6366f1;box-shadow:0 0 0 2px #e0e7ff">
+    <div class="mockup-header" style="background:#6366f1;color:white">After — Left sidebar ✦ new</div>
+    <div class="mockup-body" style="padding:0;overflow:hidden;border-radius:0 0 8px 8px;display:flex">
+      <!-- Sidebar -->
+      <div style="width:180px;background:#0f172a;min-height:220px;padding:16px 0;flex-shrink:0">
+        <div style="padding:0 16px 16px;border-bottom:1px solid #1e293b;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:700;color:white">Faltas Bot</div>
+          <div style="font-size:10px;color:#64748b;margin-top:2px">Gestão de frequência</div>
+        </div>
+        <div style="padding:6px 8px;margin:0 8px;border-radius:6px;background:#1e293b;display:flex;align-items:center;gap:8px;margin-bottom:2px">
+          <span style="font-size:12px">🏠</span>
+          <span style="font-size:11px;color:white;font-weight:500">Dashboard</span>
+        </div>
+        <div style="padding:6px 8px;margin:0 8px;display:flex;align-items:center;gap:8px;margin-bottom:2px">
+          <span style="font-size:12px">👥</span>
+          <span style="font-size:11px;color:#94a3b8">Alunos</span>
+        </div>
+        <div style="padding:6px 8px;margin:0 8px;display:flex;align-items:center;gap:8px;margin-bottom:2px">
+          <span style="font-size:12px">📄</span>
+          <span style="font-size:11px;color:#94a3b8">Importar PDF</span>
+        </div>
+        <div style="padding:6px 8px;margin:0 8px;display:flex;align-items:center;gap:8px;margin-bottom:2px">
+          <span style="font-size:12px">🔔</span>
+          <span style="font-size:11px;color:#94a3b8">Alertas</span>
+          <span style="margin-left:auto;background:#ef4444;color:white;font-size:9px;padding:1px 5px;border-radius:999px">3</span>
+        </div>
+        <div style="position:absolute;bottom:0;left:0;width:180px;padding:12px 16px;border-top:1px solid #1e293b">
+          <div style="font-size:10px;color:#475569">● WhatsApp conectado</div>
+        </div>
+      </div>
+      <!-- Main content -->
+      <div style="flex:1;background:#f8fafc;padding:16px">
+        <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:12px">Dashboard</div>
+        <!-- Priority alert -->
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px;margin-bottom:10px">
+          <div style="font-size:10px;font-weight:600;color:#dc2626;margin-bottom:4px">⚠ AÇÃO NECESSÁRIA — 23 alunos em risco</div>
+          <div style="font-size:10px;color:#991b1b">João da Silva · 14 faltas · Turma A</div>
+          <div style="font-size:10px;color:#991b1b">Maria Souza · 11 faltas · Turma B</div>
+          <div style="font-size:10px;color:#7f1d1d">+21 mais → Ver todos</div>
+        </div>
+        <!-- Stat cards row -->
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
+          <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:8px">
+            <div style="font-size:9px;color:#64748b">Total alunos</div>
+            <div style="font-size:18px;font-weight:700;color:#0f172a">142</div>
+          </div>
+          <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:8px">
+            <div style="font-size:9px;color:#64748b">Em risco ≥5</div>
+            <div style="font-size:18px;font-weight:700;color:#dc2626">23</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:20px">Does this overall shell structure look right? Let me know in the terminal.</p>

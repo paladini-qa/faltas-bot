@@ -1,0 +1,24 @@
+{
+  "name": "faltas-bot",
+  "version": "1.0.0",
+  "description": "Bot de monitoramento de faltas escolares via WhatsApp",
+  "main": "index.js",
+  "scripts": {
+    "importar": "node index.js importar",
+    "server": "node --watch server/index.js",
+    "client": "npm --prefix client run dev",
+    "dev": "bash dev.sh"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "dotenv": "^17.4.2",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.20.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.23.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

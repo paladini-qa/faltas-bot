@@ -1,0 +1,40 @@
+<h2>Three redesign approaches</h2>
+<p class="subtitle">Same data, different priorities — pick the direction that fits best</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Sidebar + Priority Dashboard <span style="font-size:0.75rem;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:999px;margin-left:8px;">Recommended</span></h3>
+      <p>Replace top navbar with a left sidebar. Redesign the dashboard to show a clear "Action needed" section — at-risk students front and center. Each page gets polished empty states and skeleton loaders. Workflow becomes: <strong>Import PDF → review at-risk list → send alerts</strong>.</p>
+      <div class="pros-cons" style="margin-top:12px">
+        <div class="pros"><h4>Pros</h4><ul><li>Sidebar scales better as more pages are added</li><li>Secretary sees priorities without navigating</li><li>Most professional look</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>More work — layout changes affect every page</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Enhanced Top Navbar + UX polish</h3>
+      <p>Keep the current layout but add icons to the navbar, redesign stat cards with trend indicators, add a "Quick actions" bar to the dashboard, replace browser <code>alert()</code>/<code>confirm()</code> dialogs with inline modals and toast notifications.</p>
+      <div class="pros-cons" style="margin-top:12px">
+        <div class="pros"><h4>Pros</h4><ul><li>Less disruptive — familiar structure stays</li><li>Faster to implement</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Top nav feels cramped if more links added</li><li>Dashboard still requires scanning to find priorities</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Minimal visual refresh only</h3>
+      <p>Keep all layouts as-is. Just improve typography, add better color contrast, polish the tables, replace "Carregando..." text with skeleton loaders, and add a consistent card style. No structural changes.</p>
+      <div class="pros-cons" style="margin-top:12px">
+        <div class="pros"><h4>Pros</h4><ul><li>Lowest risk, fastest</li><li>Preserves existing mental model</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Workflow pain points remain</li><li>Doesn't address "clear workflow for secretary"</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>
