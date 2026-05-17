@@ -7,6 +7,8 @@ const links = [
   { to: '/alunos', label: 'Alunos', icon: '👥' },
   { to: '/upload', label: 'Importar PDF', icon: '📄' },
   { to: '/alertas', label: 'Alertas', icon: '🔔' },
+  { to: '/mensagens', label: 'Mensagens', icon: '📨' },
+  { to: '/configuracoes', label: 'Configurações', icon: '⚙️' },
 ];
 
 const WA_STATUS = {

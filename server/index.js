@@ -12,7 +12,10 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/alunos', require('./routes/alunos'));
 app.use('/api/responsaveis', require('./routes/responsaveis'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/faltas', require('./routes/faltas'));
 app.use('/api/alertas', require('./routes/alertas'));
+app.use('/api/configuracoes', require('./routes/configuracoes'));
+app.use('/api/mensagens', require('./routes/mensagens'));
 
 const PORT = process.env.PORT || 3001;
 

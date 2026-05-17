@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+import ConfirmModal from '../components/ConfirmModal';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 function formatDate(iso) {
   return new Date(iso).toLocaleString('pt-BR', {
@@ -16,6 +19,9 @@ function formatTipoAlerta(tipo) {
   }
   if (tipo.includes('consec')) {
     return { label: '3 consecutivas', className: 'bg-orange-100 text-orange-700' };
+  }
+  if (tipo === 'manual') {
+    return { label: 'Manual', className: 'bg-purple-100 text-purple-700' };
   }
   return { label: tipo, className: 'bg-slate-100 text-slate-600' };
 }
@@ -49,6 +55,8 @@ export default function Alertas() {
   const [qrDataUrl, setQrDataUrl] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [resultado, setResultado] = useState(null);
+  const [confirmState, setConfirmState] = useState({ open: false, alertaId: null });
+  const { toasts, toast } = useToast();
 
   useEffect(() => {
     api.alertas(100)
@@ -86,13 +94,28 @@ export default function Alertas() {
     }
   }
 
+  async function confirmDeleteAlerta() {
+    await api.deleteAlerta(confirmState.alertaId);
+    setAlertas(prev => prev.filter(x => x.id !== confirmState.alertaId));
+    toast.success('Alerta excluído');
+    setConfirmState({ open: false, alertaId: null });
+  }
+
   if (loading) return <p className="p-6 text-slate-500">Carregando...</p>;
   if (error) return <p className="p-6 text-red-600">{error}</p>;
 
   const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.desconectado;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-4">
+    <>
+    <ConfirmModal
+      open={confirmState.open}
+      message="Excluir este registro de alerta?"
+      onConfirm={confirmDeleteAlerta}
+      onCancel={() => setConfirmState({ open: false, alertaId: null })}
+    />
+    <Toast toasts={toasts} />
+    <div className="p-6 space-y-4">
       <h1 className="text-2xl font-bold text-gray-800">Alertas Enviados</h1>
 
       {/* WhatsApp status bar */}
@@ -153,6 +176,7 @@ export default function Alertas() {
                 <th className="px-4 py-3 font-medium">Turma</th>
                 <th className="px-4 py-3 font-medium">Tipo</th>
                 <th className="px-4 py-3 font-medium">Enviado em</th>
+                <th className="px-4 py-3 w-10" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -172,6 +196,14 @@ export default function Alertas() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-500">{formatDate(a.enviado_em)}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => setConfirmState({ open: true, alertaId: a.id })}
+                        className="text-red-400 hover:text-red-600 text-xs font-medium"
+                      >
+                        Excluir
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -182,5 +214,6 @@ export default function Alertas() {
 
       <p className="text-xs text-gray-400">{alertas.length} alerta{alertas.length !== 1 ? 's' : ''}</p>
     </div>
+    </>
   );
 }

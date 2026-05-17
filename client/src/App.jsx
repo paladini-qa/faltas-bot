@@ -5,6 +5,8 @@ import Alunos from './pages/Alunos.jsx';
 import AlunoDetalhe from './pages/AlunoDetalhe.jsx';
 import Upload from './pages/Upload.jsx';
 import Alertas from './pages/Alertas.jsx';
+import Configuracoes from './pages/Configuracoes.jsx';
+import Mensagens from './pages/Mensagens.jsx';
 
 export default function App() {
   return (
@@ -17,6 +19,8 @@ export default function App() {
           <Route path="/alunos/:id" element={<AlunoDetalhe />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/alertas" element={<Alertas />} />
+          <Route path="/configuracoes" element={<Configuracoes />} />
+          <Route path="/mensagens" element={<Mensagens />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
