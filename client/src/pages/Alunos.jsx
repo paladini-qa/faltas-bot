@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import SkeletonRow from '../components/SkeletonRow';
+import ConfirmModal from '../components/ConfirmModal';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 function riskLabel(faltas) {
   if (faltas >= 10) return 'Alto risco';
@@ -38,6 +41,9 @@ export default function Alunos() {
   const [error, setError] = useState(null);
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+  const [confirmState, setConfirmState] = useState({ open: false, alunoId: null, alunoNome: '' });
+  const { toasts, toast } = useToast();
+  const [selected, setSelected] = useState(new Set());
 
   const q = params.get('q') || '';
   const turma = params.get('turma') || '';
@@ -56,6 +62,10 @@ export default function Alunos() {
       .catch(e => { setError(e.message); setLoading(false); });
   }, [q, turma, serie, curso, risco]);
 
+  useEffect(() => {
+    setSelected(new Set());
+  }, [q, turma, serie, curso, risco]);
+
   function set(key, value) {
     const next = new URLSearchParams(params);
     if (value) next.set(key, value); else next.delete(key);
@@ -68,8 +78,44 @@ export default function Alunos() {
 
   const emRiscoCount = alunos.filter(a => a.faltas_injustificadas >= 5).length;
 
+  function handleDelete(e, alunoId, alunoNome) {
+    e.stopPropagation();
+    setConfirmState({ open: true, alunoId, alunoNome });
+  }
+
+  async function confirmDelete() {
+    await api.deleteAluno(confirmState.alunoId);
+    setAlunos(prev => prev.filter(a => a.id !== confirmState.alunoId));
+    toast.success('Aluno excluído');
+    setConfirmState({ open: false, alunoId: null, alunoNome: '' });
+  }
+
+  function toggleSelect(id) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selected.size === alunos.length && alunos.length > 0) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(alunos.map(a => a.id)));
+    }
+  }
+
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-4">
+    <>
+    <ConfirmModal
+      open={confirmState.open}
+      message={`Excluir "${confirmState.alunoNome}"? Todos os dados associados serão removidos.`}
+      onConfirm={confirmDelete}
+      onCancel={() => setConfirmState({ open: false, alunoId: null, alunoNome: '' })}
+    />
+    <Toast toasts={toasts} />
+    <div className="p-6 space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-800">Alunos</h1>
         {!loading && (
@@ -131,20 +177,31 @@ export default function Alunos() {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
               <tr>
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={alunos.length > 0 && selected.size === alunos.length}
+                    ref={el => { if (el) el.indeterminate = selected.size > 0 && selected.size < alunos.length; }}
+                    onChange={toggleSelectAll}
+                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-400"
+                    disabled={loading || alunos.length === 0}
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">Nome</th>
                 <th className="px-4 py-3 font-medium">Turma</th>
                 <th className="px-4 py-3 font-medium">Série</th>
                 <th className="px-4 py-3 font-medium">Faltas inj.</th>
                 <th className="px-4 py-3 font-medium">Responsáveis</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 w-10" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
-                Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={6} />)
+                Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={7} />)
               ) : alunos.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                     Nenhum aluno encontrado.
                   </td>
                 </tr>
@@ -155,6 +212,14 @@ export default function Alunos() {
                     onClick={() => navigate('/alunos/' + a.id)}
                     className={`cursor-pointer hover:bg-slate-50 transition-colors ${rowBorderStyle(a.faltas_injustificadas)}`}
                   >
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selected.has(a.id)}
+                        onChange={() => toggleSelect(a.id)}
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-400"
+                      />
+                    </td>
                     <td className="px-4 py-3 font-medium text-gray-900">{a.nome}</td>
                     <td className="px-4 py-3 text-gray-600">{a.turma || '—'}</td>
                     <td className="px-4 py-3 text-gray-600">{a.serie || '—'}</td>
@@ -175,6 +240,15 @@ export default function Alunos() {
                         {riskLabel(a.faltas_injustificadas)}
                       </span>
                     </td>
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={e => handleDelete(e, a.id, a.nome)}
+                        className="text-red-400 hover:text-red-600 text-xs font-medium"
+                        title="Excluir"
+                      >
+                        Excluir
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -185,5 +259,6 @@ export default function Alunos() {
 
       <p className="text-xs text-slate-400">{alunos.length} aluno{alunos.length !== 1 ? 's' : ''} encontrado{alunos.length !== 1 ? 's' : ''}</p>
     </div>
+    </>
   );
 }
