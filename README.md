@@ -1,105 +1,26 @@
 # Faltas Bot
 
-Bot em Node.js para monitoramento automático de faltas de alunos e envio de alertas via WhatsApp para os responsáveis.
+Dashboard web para monitoramento de faltas escolares e envio automático de alertas via WhatsApp para os responsáveis dos alunos.
 
 ## Visão Geral
 
-O Faltas Bot automatiza o fluxo de comunicação entre a escola e as famílias quando um aluno acumula faltas. O usuário importa o relatório diário em PDF, cadastra os responsáveis dos alunos novos, e o bot avalia as regras de alerta e envia mensagens pelo WhatsApp automaticamente.
+A secretaria importa o relatório diário de faltas em PDF, gerencia os responsáveis dos alunos pelo dashboard, e o bot avalia as regras de alerta e envia mensagens pelo WhatsApp automaticamente.
 
-## Stack Tecnológica
+## Stack
 
-| Camada        | Tecnologia          |
-| ------------- | ------------------- |
-| Runtime       | Node.js >= 18       |
-| PDF parsing   | `pdf-parse`         |
-| WhatsApp      | `whatsapp-web.js`   |
-| Banco de dados | SQLite via `better-sqlite3` |
-| Interface     | CLI interativo      |
-
-## Fluxo de Trabalho
-
-### Etapa 1 — Importação diária de faltas (PDF)
-
-O usuário indica o caminho do PDF gerado pelo sistema escolar. O bot extrai os dados dos alunos e os registros de faltas do documento. Alunos novos são inseridos no banco de dados; faltas são acumuladas ao histórico existente.
-
-```bash
-node index.js importar --pdf ./relatorio-2025-05-14.pdf
-```
-
-### Etapa 2 — Cadastro de responsáveis
-
-Após a importação, o bot lista os alunos que ainda não possuem responsável vinculado. O usuário é solicitado a informar nome e telefone do responsável de cada um via CLI. Responsáveis já cadastrados são mantidos e reutilizados automaticamente nas importações futuras.
-
-```bash
-node index.js responsaveis
-```
-
-### Etapa 3 — Disparo de alertas via WhatsApp
-
-O bot avalia as regras de alerta para todos os alunos e envia mensagens para os responsáveis cujos alunos atingiram os critérios. Um log de envios é mantido no banco para evitar mensagens duplicadas.
-
-```bash
-node index.js alertar
-```
-
-## Regras de Alerta
-
-| Regra                | Critério                        |
-| -------------------- | ------------------------------- |
-| Faltas consecutivas  | 3 faltas em dias letivos seguidos |
-| Faltas no período    | 5 faltas dentro de 30 dias      |
-
-### Templates de Mensagem
-
-**Faltas consecutivas (3 dias):**
-> Olá [RESPONSÁVEL]! Tudo bem? Notamos que [TUTELADO] possui 3 faltas consecutivas. Entramos em contato para entendermos o motivo e como podemos ajudar.
-
-**Faltas no mês (5 em 30 dias):**
-> Olá [RESPONSÁVEL]! Tudo bem? Notamos que [TUTELADO] possui 5 faltas no período de 1 mês. Entramos em contato para entendermos o motivo e como podemos ajudar.
-
-- Cada tipo de alerta é disparado **uma única vez por período**, sem mensagens repetidas.
-- As regras são avaliadas automaticamente a cada importação.
-
-## Esquema do Banco de Dados (SQLite)
-
-```sql
--- Alunos importados do PDF
-CREATE TABLE alunos (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  nome       TEXT NOT NULL,
-  turma      TEXT,
-  criado_em  TEXT NOT NULL
-);
-
--- Responsáveis vinculados a cada aluno
-CREATE TABLE responsaveis (
-  id        INTEGER PRIMARY KEY AUTOINCREMENT,
-  aluno_id  INTEGER NOT NULL REFERENCES alunos(id),
-  nome      TEXT NOT NULL,
-  telefone  TEXT NOT NULL
-);
-
--- Registro diário de faltas
-CREATE TABLE faltas (
-  id        INTEGER PRIMARY KEY AUTOINCREMENT,
-  aluno_id  INTEGER NOT NULL REFERENCES alunos(id),
-  data      TEXT NOT NULL,
-  criado_em TEXT NOT NULL
-);
-
--- Log de alertas enviados (evita duplicação)
-CREATE TABLE alertas_enviados (
-  id           INTEGER PRIMARY KEY AUTOINCREMENT,
-  aluno_id     INTEGER NOT NULL REFERENCES alunos(id),
-  tipo_alerta  TEXT NOT NULL, -- 'consecutivas' | 'mensal'
-  enviado_em   TEXT NOT NULL
-);
-```
+| Camada      | Tecnologia                        |
+| ----------- | --------------------------------- |
+| Frontend    | React 18 + Vite + Tailwind CSS    |
+| Backend     | Node.js + Express (porta 3001)    |
+| Banco       | PostgreSQL                        |
+| WhatsApp    | `whatsapp-web.js`                 |
+| PDF parsing | `pdf-parse`                       |
 
 ## Pré-requisitos
 
 - Node.js >= 18
-- Um número de WhatsApp ativo no celular (autenticação por QR Code na primeira execução)
+- PostgreSQL rodando localmente (ou via URL remota)
+- Um número de WhatsApp ativo no celular
 
 ## Instalação
 
@@ -107,35 +28,154 @@ CREATE TABLE alertas_enviados (
 git clone <url-do-repositorio>
 cd faltas-bot
 npm install
+npm --prefix client install
 ```
 
-## Uso
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/faltas_bot
+```
+
+## Rodando o projeto
 
 ```bash
-# 1. Importar o relatório de faltas em PDF
-node index.js importar --pdf ./relatorio.pdf
-
-# 2. Cadastrar responsáveis dos alunos sem vínculo
-node index.js responsaveis
-
-# 3. Avaliar regras e enviar alertas via WhatsApp
-node index.js alertar
+npm run dev
 ```
 
-Na primeira execução do comando `alertar`, um QR Code será exibido no terminal. Escaneie-o com o WhatsApp do celular para autenticar a sessão. A sessão é salva localmente e não precisa ser refeita nas execuções seguintes.
+Isso inicia o servidor Express (porta 3001) e o cliente Vite (porta 5173) em paralelo.
+
+## Telas do Dashboard
+
+| Rota             | Descrição                                               |
+| ---------------- | ------------------------------------------------------- |
+| `/`              | Dashboard com totais e lista de alunos em risco         |
+| `/alunos`        | Listagem com filtros por nome, turma, série e risco     |
+| `/alunos/:id`    | Detalhe do aluno: responsáveis + faltas por disciplina  |
+| `/upload`        | Importação de relatório PDF de faltas                   |
+| `/alertas`       | Status do WhatsApp, envio de alertas e histórico        |
+| `/mensagens`     | Templates de mensagens enviadas                         |
+| `/configuracoes` | Configurações gerais do sistema                         |
+
+## Regras de Alerta
+
+| Regra               | Critério                            |
+| ------------------- | ----------------------------------- |
+| Faltas consecutivas | 3 faltas em dias letivos seguidos   |
+| Faltas no período   | 5 faltas injustificadas em 30 dias  |
+
+Cada tipo de alerta é disparado **uma única vez por período** por aluno, sem repetição. O histórico de envios fica registrado na tabela `alertas_enviados`.
+
+### Templates de Mensagem
+
+**3 faltas consecutivas:**
+> Olá [RESPONSÁVEL]! Tudo bem? Notamos que [TUTELADO] possui 3 faltas consecutivas. Entramos em contato para entendermos o motivo e como podemos ajudar.
+
+**5 faltas em 30 dias:**
+> Olá [RESPONSÁVEL]! Tudo bem? Notamos que [TUTELADO] possui 5 faltas no período de 1 mês. Entramos em contato para entendermos o motivo e como podemos ajudar.
+
+## Níveis de Risco
+
+| Nível      | Critério                  | Cor     |
+| ---------- | ------------------------- | ------- |
+| Alto risco | ≥ 10 faltas injustificadas | Vermelho |
+| Em risco   | ≥ 5 faltas injustificadas  | Laranja  |
+| Regular    | < 5 faltas                | Verde   |
+
+## Esquema do Banco de Dados (PostgreSQL)
+
+```sql
+CREATE TABLE alunos (
+  id        SERIAL PRIMARY KEY,
+  nome      TEXT    NOT NULL,
+  numero    INTEGER,
+  turma     TEXT    NOT NULL DEFAULT '',
+  serie     TEXT    NOT NULL DEFAULT '',
+  curso     TEXT    NOT NULL DEFAULT '',
+  criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(nome, turma, serie, curso)
+);
+
+CREATE TABLE responsaveis (
+  id        SERIAL PRIMARY KEY,
+  aluno_id  INTEGER NOT NULL REFERENCES alunos(id) ON DELETE CASCADE,
+  nome      TEXT    NOT NULL,
+  telefone  TEXT    NOT NULL
+);
+
+CREATE TABLE faltas (
+  id          SERIAL PRIMARY KEY,
+  aluno_id    INTEGER NOT NULL REFERENCES alunos(id) ON DELETE CASCADE,
+  data        DATE    NOT NULL,
+  disciplina  TEXT    NOT NULL DEFAULT '',
+  justificada BOOLEAN NOT NULL DEFAULT FALSE,
+  criado_em   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(aluno_id, data, disciplina)
+);
+
+CREATE TABLE alertas_enviados (
+  id          SERIAL PRIMARY KEY,
+  aluno_id    INTEGER NOT NULL REFERENCES alunos(id) ON DELETE CASCADE,
+  tipo_alerta TEXT    NOT NULL,  -- 'consecutivas' | 'mensal'
+  enviado_em  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE configuracoes (
+  chave TEXT PRIMARY KEY,
+  valor TEXT NOT NULL
+);
+```
+
+O schema é criado automaticamente ao iniciar o servidor (`initSchema` em `src/db.js`).
 
 ## Estrutura de Pastas
 
 ```
 faltas-bot/
+├── client/                   # Frontend React + Vite
+│   └── src/
+│       ├── pages/
+│       │   ├── Dashboard.jsx
+│       │   ├── Alunos.jsx
+│       │   ├── AlunoDetalhe.jsx
+│       │   ├── Upload.jsx
+│       │   ├── Alertas.jsx
+│       │   ├── Mensagens.jsx
+│       │   └── Configuracoes.jsx
+│       ├── components/
+│       │   ├── Sidebar.jsx
+│       │   ├── Badge.jsx
+│       │   ├── Toast.jsx
+│       │   ├── ConfirmModal.jsx
+│       │   └── SkeletonRow.jsx
+│       ├── hooks/
+│       │   └── useToast.js
+│       └── api.js            # Funções de chamada à API REST
+├── server/
+│   ├── index.js              # Entry point do Express
+│   └── routes/
+│       ├── dashboard.js
+│       ├── alunos.js
+│       ├── responsaveis.js
+│       ├── upload.js
+│       ├── faltas.js
+│       ├── alertas.js
+│       ├── mensagens.js
+│       └── configuracoes.js
 ├── src/
-│   ├── importar.js       # Parsing do PDF e inserção de faltas no banco
-│   ├── responsaveis.js   # CLI para cadastro de responsáveis
-│   ├── alertas.js        # Lógica das regras e disparo de mensagens
-│   └── db.js             # Conexão e queries do SQLite
-├── data/
-│   └── faltas.db         # Banco SQLite (gerado automaticamente)
-├── index.js              # Entry point do CLI
-├── package.json
-└── README.md
+│   ├── db.js                 # Pool PostgreSQL e queries
+│   ├── importar.js           # Parsing do PDF
+│   ├── alertas.js            # Lógica das regras de alerta
+│   └── whatsapp.js           # Cliente whatsapp-web.js
+├── docs/
+│   └── requirements.md       # Requisitos funcionais e não-funcionais
+├── .env                      # Variáveis de ambiente (não commitado)
+├── index.js                  # CLI legado (importação via terminal)
+└── package.json
 ```
+
+## WhatsApp
+
+Na primeira vez que acessar a tela de Alertas, um QR Code será exibido na interface. Escaneie com o WhatsApp do celular para autenticar a sessão. A sessão é salva localmente e não precisa ser refeita nas execuções seguintes.
+
+A barra de status no topo da tela de Alertas indica o estado da conexão em tempo real (conectado / aguardando QR / desconectado).
