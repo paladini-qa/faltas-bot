@@ -157,7 +157,12 @@ function parseFrequencia(texto, ano) {
 
       // Student's class number (1-99)
       if (i < linhas.length && /^\d{1,2}$/.test(linhas[i])) {
-        const numero = parseInt(linhas[i]);
+        // pdf-parse can merge the roster number with an adjacent column (e.g. serie "1"),
+        // producing "11" for student #1. If both digits are identical, take only the first.
+        const raw = linhas[i];
+        const numero = (raw.length === 2 && raw[0] === raw[1])
+          ? parseInt(raw[0])
+          : parseInt(raw);
         i++;
 
         // Read exactly nCols attendance values

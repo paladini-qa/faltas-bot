@@ -24,6 +24,8 @@ router.post('/bulk-delete', async (req, res) => {
     const { ids } = req.body;
     if (!Array.isArray(ids) || ids.length === 0)
       return res.status(400).json({ error: 'ids deve ser um array não vazio' });
+    if (!ids.every(id => Number.isInteger(id) && id > 0))
+      return res.status(400).json({ error: 'IDs inválidos' });
     await deleteAlunosBulk(ids);
     res.status(204).end();
   } catch (err) {
@@ -33,7 +35,10 @@ router.post('/bulk-delete', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const aluno = await getAlunoById(parseInt(req.params.id));
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id) || id <= 0)
+      return res.status(400).json({ error: 'ID inválido' });
+    const aluno = await getAlunoById(id);
     if (!aluno) return res.status(404).json({ error: 'Aluno não encontrado' });
     res.json(aluno);
   } catch (err) {
@@ -66,7 +71,10 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const deleted = await deleteAluno(parseInt(req.params.id));
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id) || id <= 0)
+      return res.status(400).json({ error: 'ID inválido' });
+    const deleted = await deleteAluno(id);
     if (!deleted) return res.status(404).json({ error: 'Aluno não encontrado' });
     res.status(204).end();
   } catch (err) {

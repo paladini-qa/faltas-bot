@@ -7,23 +7,26 @@ import Upload from './pages/Upload.jsx';
 import Alertas from './pages/Alertas.jsx';
 import Configuracoes from './pages/Configuracoes.jsx';
 import Mensagens from './pages/Mensagens.jsx';
+import { WhatsappProvider } from './contexts/WhatsappContext.jsx';
 
 export default function App() {
   return (
-    <div className="min-h-screen flex bg-slate-50">
-      <Sidebar />
-      <main className="flex-1 overflow-auto ml-56">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/alunos" element={<Alunos />} />
-          <Route path="/alunos/:id" element={<AlunoDetalhe />} />
-          <Route path="/upload" element={<Upload />} />
-          <Route path="/alertas" element={<Alertas />} />
-          <Route path="/configuracoes" element={<Configuracoes />} />
-          <Route path="/mensagens" element={<Mensagens />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-    </div>
+    <WhatsappProvider>
+      <div className="fb-app">
+        <Sidebar />
+        <main style={{ overflow: 'auto', minHeight: '100vh' }}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/alunos" element={<Alunos />} />
+            <Route path="/alunos/:id" element={<AlunoDetalhe />} />
+            <Route path="/upload" element={<Upload />} />
+            <Route path="/alertas" element={<Alertas />} />
+            <Route path="/configuracoes" element={<Configuracoes />} />
+            <Route path="/mensagens" element={<Mensagens />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </div>
+    </WhatsappProvider>
   );
 }

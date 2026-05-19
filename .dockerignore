@@ -1,0 +1,38 @@
+# Dependências — reinstaladas dentro do container
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build local do client (gerado no stage builder do Dockerfile)
+client/dist/
+
+# Dados locais e uploads
+data/
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Variáveis de ambiente com secrets reais
+.env
+
+# Git e ferramentas de dev
+.git/
+.gitignore
+.superpowers/
+.claude/
+
+# SQLite local (banco de dev — em produção usa PostgreSQL)
+*.db
+*.db-shm
+*.db-wal
+
+# Logs e temporários
+*.log
+npm-debug.log*
+
+# Documentação e arquivos de projeto
+README.md
+docs/
+
+# OS
+.DS_Store
+Thumbs.db

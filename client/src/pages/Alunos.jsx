@@ -1,305 +1,364 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
-import SkeletonRow from '../components/SkeletonRow';
-import ConfirmModal from '../components/ConfirmModal';
+import * as I from '../components/icons.jsx';
+import { Avatar, RiskPill, Sparkline, initials, riskKey, riskColor } from '../components/atoms.jsx';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/Toast';
-
-function riskLabel(faltas) {
-  if (faltas >= 10) return 'Alto risco';
-  if (faltas >= 5) return 'Em risco';
-  return 'Regular';
-}
-
-function riskBadgeStyle(faltas) {
-  if (faltas >= 10) return 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700';
-  if (faltas >= 5) return 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700';
-  return 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700';
-}
-
-function rowBorderStyle(faltas) {
-  if (faltas >= 10) return 'border-l-4 border-l-red-500 bg-red-50/40';
-  if (faltas >= 5) return 'border-l-4 border-l-orange-500 bg-orange-50/30';
-  return 'border-l-4 border-l-transparent';
-}
-
-function faltasCellStyle(faltas) {
-  if (faltas >= 10) return 'px-4 py-3 font-bold text-red-600';
-  if (faltas >= 5) return 'px-4 py-3 font-bold text-orange-500';
-  return 'px-4 py-3 font-bold text-slate-700';
-}
-
-const CHIP_BASE = 'px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all';
-const CHIP_ACTIVE = 'bg-red-100 text-red-700 ring-2 ring-red-400';
-const CHIP_INACTIVE = 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function Alunos() {
   const [alunos, setAlunos] = useState([]);
   const [filtros, setFiltros] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
-  const [confirmState, setConfirmState] = useState({ open: false, alunoId: null, alunoNome: '' });
+  const [selected, setSelected] = useState(new Set());
+  const [view, setView] = useState('table');
+  const [drawer, setDrawer] = useState(null);
   const [confirmBulk, setConfirmBulk] = useState(false);
   const { toasts, toast } = useToast();
-  const [selected, setSelected] = useState(new Set());
 
-  const q = params.get('q') || '';
+  const q     = params.get('q') || '';
   const turma = params.get('turma') || '';
   const serie = params.get('serie') || '';
-  const curso = params.get('curso') || '';
   const risco = params.get('risco') || '';
 
-  useEffect(() => {
-    api.filtros().then(setFiltros).catch(() => {});
-  }, []);
-
+  useEffect(() => { api.filtros().then(setFiltros).catch(() => {}); }, []);
   useEffect(() => {
     setLoading(true);
-    api.alunos({ q, turma, serie, curso, risco })
-      .then(data => { setAlunos(data); setLoading(false); })
-      .catch(e => { setError(e.message); setLoading(false); });
-  }, [q, turma, serie, curso, risco]);
+    api.alunos({ q, turma, serie, risco })
+      .then(d => { setAlunos(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [q, turma, serie, risco]);
+  useEffect(() => { setSelected(new Set()); }, [q, turma, serie, risco]);
 
-  useEffect(() => {
-    setSelected(new Set());
-  }, [q, turma, serie, curso, risco]);
-
-  function set(key, value) {
-    const next = new URLSearchParams(params);
-    if (value) next.set(key, value); else next.delete(key);
-    setParams(next);
+  function set(key, val) {
+    const n = new URLSearchParams(params);
+    if (val) n.set(key, val); else n.delete(key);
+    setParams(n);
   }
 
-  function toggleRisco(value) {
-    set('risco', risco === value ? '' : value);
+  const toggleSel = (id) => {
+    const n = new Set(selected);
+    n.has(id) ? n.delete(id) : n.add(id);
+    setSelected(n);
+  };
+  const toggleAll = () => {
+    if (selected.size === alunos.length && alunos.length > 0) setSelected(new Set());
+    else setSelected(new Set(alunos.map(s => s.id)));
+  };
+
+  async function confirmBulkDelete() {
+    try {
+      await api.deleteAlunosBulk([...selected]);
+      setAlunos(prev => prev.filter(a => !selected.has(a.id)));
+      toast.success(selected.size + ' aluno' + (selected.size !== 1 ? 's' : '') + ' excluído' + (selected.size !== 1 ? 's' : ''));
+      setSelected(new Set());
+    } catch (e) {
+      toast.error(e.message);
+    }
+    setConfirmBulk(false);
   }
 
   const emRiscoCount = alunos.filter(a => a.faltas_injustificadas >= 5).length;
 
-  function handleDelete(e, alunoId, alunoNome) {
-    e.stopPropagation();
-    setConfirmState({ open: true, alunoId, alunoNome });
-  }
-
-  async function confirmDelete() {
-    await api.deleteAluno(confirmState.alunoId);
-    setAlunos(prev => prev.filter(a => a.id !== confirmState.alunoId));
-    toast.success('Aluno excluído');
-    setConfirmState({ open: false, alunoId: null, alunoNome: '' });
-  }
-
-  async function confirmBulkDelete() {
-    const ids = [...selected];
-    try {
-      await api.deleteAlunosBulk(ids);
-      setAlunos(prev => prev.filter(a => !ids.includes(a.id)));
-      toast.success(`${ids.length} aluno${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''}`);
-      setSelected(new Set());
-      setConfirmBulk(false);
-    } catch (e) {
-      toast.error(e.message || 'Erro ao excluir alunos');
-      setConfirmBulk(false);
-    }
-  }
-
-  function toggleSelect(id) {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  }
-
-  function toggleSelectAll() {
-    if (selected.size === alunos.length && alunos.length > 0) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(alunos.map(a => a.id)));
-    }
-  }
-
   return (
     <>
-    <ConfirmModal
-      open={confirmState.open}
-      message={`Excluir "${confirmState.alunoNome}"? Todos os dados associados serão removidos.`}
-      onConfirm={confirmDelete}
-      onCancel={() => setConfirmState({ open: false, alunoId: null, alunoNome: '' })}
-    />
-    <ConfirmModal
-      open={confirmBulk}
-      message={`Excluir ${selected.size} aluno${selected.size !== 1 ? 's' : ''} selecionado${selected.size !== 1 ? 's' : ''}? Todos os dados associados serão removidos.`}
-      onConfirm={confirmBulkDelete}
-      onCancel={() => setConfirmBulk(false)}
-    />
-    <Toast toasts={toasts} />
-    <div className="p-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">Alunos</h1>
-        {!loading && (
-          <p className="text-sm text-slate-500 mt-0.5">
-            {alunos.length} alunos · <span className="text-red-600 font-medium">{emRiscoCount} em risco</span>
-          </p>
+      <div className="fb-main">
+        <div className="fb-page-header">
+          <div>
+            <h1 className="fb-page-title">Alunos</h1>
+            <div className="fb-page-sub">
+              {alunos.length} alunos ·{' '}
+              <span style={{ color: emRiscoCount ? 'var(--danger-text)' : 'var(--success-text)', fontWeight: 500 }}>
+                {emRiscoCount} em risco
+              </span>
+            </div>
+          </div>
+          <div className="fb-row">
+            <button className="fb-btn fb-btn-secondary"><I.Download /> Exportar</button>
+            <button className="fb-btn fb-btn-primary"><I.UserPlus /> Novo aluno</button>
+          </div>
+        </div>
+
+        <div className="fb-card" style={{ marginBottom: 14 }}>
+          <div style={{ padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="fb-input-wrap" style={{ flex: '1 1 260px', minWidth: 220 }}>
+              <I.Search />
+              <input className="fb-input" placeholder="Buscar por nome..." value={q} onChange={e => set('q', e.target.value)} />
+            </div>
+            <select className="fb-select" style={{ width: 140 }} value={turma} onChange={e => set('turma', e.target.value)}>
+              <option value="">Todas as turmas</option>
+              {(filtros.turmas || []).map(t => <option key={t}>{t}</option>)}
+            </select>
+            <select className="fb-select" style={{ width: 130 }} value={serie} onChange={e => set('serie', e.target.value)}>
+              <option value="">Todas as series</option>
+              {(filtros.series || []).map(s => <option key={s}>{s}</option>)}
+            </select>
+            <div className="fb-seg">
+              <button className={!risco ? 'on' : ''} onClick={() => set('risco', '')}>Todos</button>
+              <button className={risco === 'alto' ? 'on' : ''} onClick={() => set('risco', risco === 'alto' ? '' : 'alto')}>
+                <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--danger)', display: 'block' }} /> Alto
+              </button>
+              <button className={risco === 'risco' ? 'on' : ''} onClick={() => set('risco', risco === 'risco' ? '' : 'risco')}>
+                <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--warning)', display: 'block' }} /> Risco
+              </button>
+            </div>
+            <div className="fb-seg">
+              <button className={view === 'table' ? 'on' : ''} onClick={() => setView('table')}><I.List /></button>
+              <button className={view === 'cards' ? 'on' : ''} onClick={() => setView('cards')}><I.Grid /></button>
+            </div>
+          </div>
+          {selected.size > 0 && (
+            <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontWeight: 500, color: 'var(--primary-text)' }}>{selected.size} selecionados</span>
+              <div style={{ flex: 1 }} />
+              <button className="fb-btn fb-btn-sm fb-btn-secondary" onClick={() => navigate('/mensagens')}><I.Send /> Enviar mensagem</button>
+              <button className="fb-btn fb-btn-sm fb-btn-danger" onClick={() => setConfirmBulk(true)}><I.Trash /> Excluir</button>
+              <button className="fb-btn fb-btn-sm fb-btn-ghost" onClick={() => setSelected(new Set())}><I.X /></button>
+            </div>
+          )}
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-3)' }}>Carregando...</div>
+        ) : view === 'table' ? (
+          <div className="fb-card">
+            <table className="fb-tbl">
+              <thead>
+                <tr>
+                  <th style={{ width: 36, paddingLeft: 16 }}>
+                    <input type="checkbox" checked={selected.size === alunos.length && alunos.length > 0} onChange={toggleAll} />
+                  </th>
+                  <th>Nome</th>
+                  <th>Turma</th>
+                  <th>Serie</th>
+                  <th>Faltas inj.</th>
+                  <th>Tendencia</th>
+                  <th>Responsaveis</th>
+                  <th>Status</th>
+                  <th style={{ width: 40 }} />
+                </tr>
+              </thead>
+              <tbody>
+                {alunos.map(s => {
+                  const risk = riskKey(s.faltas_injustificadas);
+                  const ini = initials(s.nome);
+                  const monthly = Array.from({ length: 6 }, (_, m) => Math.max(0, Math.round(s.faltas_injustificadas / 6 * (0.4 + m * 0.12))));
+                  return (
+                    <tr key={s.id} onClick={() => setDrawer(s)} className={selected.has(s.id) ? 'sel' : ''}>
+                      <td style={{ paddingLeft: 16 }} onClick={e => { e.stopPropagation(); toggleSel(s.id); }}>
+                        <input type="checkbox" checked={selected.has(s.id)} onChange={() => {}} />
+                      </td>
+                      <td>
+                        <div className="fb-row" style={{ gap: 10 }}>
+                          <Avatar initials={ini} risk={risk} />
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{s.nome}</div>
+                            <div className="fb-muted-3 fb-num" style={{ fontSize: 11 }}>#{s.id}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="fb-muted">{s.turma || '-'}</td>
+                      <td className="fb-muted">{s.serie || '-'}</td>
+                      <td>
+                        <span className="fb-num" style={{ fontWeight: 500, color: risk === 'alto' ? 'var(--danger-text)' : risk === 'risco' ? 'var(--warning-text)' : 'var(--text)' }}>
+                          {s.faltas_injustificadas}
+                        </span>
+                      </td>
+                      <td><Sparkline data={monthly} color={riskColor(risk)} width={70} height={22} /></td>
+                      <td>
+                        {(s.total_responsaveis > 0)
+                          ? <span className="fb-pill fb-pill-success">{s.total_responsaveis} cadastrado{s.total_responsaveis > 1 ? 's' : ''}</span>
+                          : <span className="fb-pill fb-pill-danger">Sem responsavel</span>}
+                      </td>
+                      <td><RiskPill risk={risk} /></td>
+                      <td><I.Chevron size={14} style={{ color: 'var(--text-3)' }} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {alunos.length === 0 && <EmptyState />}
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
+            {alunos.map(s => {
+              const risk = riskKey(s.faltas_injustificadas);
+              const ini = initials(s.nome);
+              const monthly = Array.from({ length: 6 }, (_, m) => Math.max(0, Math.round(s.faltas_injustificadas / 6 * (0.4 + m * 0.12))));
+              return (
+                <div key={s.id} className="fb-card" style={{ padding: 16, cursor: 'pointer' }} onClick={() => setDrawer(s)}>
+                  <div className="fb-row" style={{ gap: 10, marginBottom: 12 }}>
+                    <Avatar initials={ini} risk={risk} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 500, fontSize: 13.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.nome}</div>
+                      <div className="fb-muted-3" style={{ fontSize: 11.5 }}>{s.turma} · {s.serie}</div>
+                    </div>
+                    <RiskPill risk={risk} />
+                  </div>
+                  <div className="fb-row-between" style={{ paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                    <div>
+                      <div className="fb-muted-3" style={{ fontSize: 11 }}>FALTAS INJ.</div>
+                      <div className="fb-num" style={{ fontSize: 22, fontWeight: 500 }}>{s.faltas_injustificadas}</div>
+                    </div>
+                    <Sparkline data={monthly} color={riskColor(risk)} width={80} height={28} />
+                  </div>
+                </div>
+              );
+            })}
+            {alunos.length === 0 && <div style={{ gridColumn: '1/-1' }}><EmptyState /></div>}
+          </div>
         )}
       </div>
 
-      <div className="flex flex-wrap gap-3 items-center">
-        <input
-          type="search"
-          placeholder="Buscar por nome..."
-          value={q}
-          onChange={e => set('q', e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+      {drawer && (
+        <AlunoDrawer
+          aluno={drawer}
+          onClose={() => setDrawer(null)}
+          onNavigate={() => { navigate('/alunos/' + drawer.id); setDrawer(null); }}
+          onMessage={() => { navigate('/mensagens'); setDrawer(null); }}
         />
-
-        {[
-          { key: 'turma', label: 'Turma', opts: filtros.turmas },
-          { key: 'serie', label: 'Série', opts: filtros.series },
-          { key: 'curso', label: 'Curso', opts: filtros.cursos },
-        ].map(({ key, label, opts }) => (
-          <select
-            key={key}
-            value={params.get(key) || ''}
-            onChange={e => set(key, e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <option value="">{label}: Todos</option>
-            {(opts || []).map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        ))}
-
-        <span
-          className={`${CHIP_BASE} ${risco === 'alto' ? CHIP_ACTIVE : CHIP_INACTIVE}`}
-          onClick={() => toggleRisco('alto')}
-        >
-          🔴 Alto risco
-        </span>
-        <span
-          className={`${CHIP_BASE} ${risco === 'medio' ? CHIP_ACTIVE : CHIP_INACTIVE}`}
-          onClick={() => toggleRisco('medio')}
-        >
-          🟠 Em risco
-        </span>
-        <span
-          className={`${CHIP_BASE} ${risco === '' && false ? CHIP_ACTIVE : CHIP_INACTIVE}`}
-          onClick={() => set('risco', '')}
-        >
-          🟢 Regular
-        </span>
-      </div>
-
-      {error && <p className="text-red-600">{error}</p>}
-
-      {selected.size > 0 && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm">
-          <span className="font-medium text-red-700">
-            {selected.size} selecionado{selected.size !== 1 ? 's' : ''}
-          </span>
-          <button
-            onClick={() => setConfirmBulk(true)}
-            className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors"
-          >
-            Excluir selecionados
-          </button>
-          <button
-            onClick={() => setSelected(new Set())}
-            className="px-3 py-1 text-slate-600 border border-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
-          >
-            Limpar seleção
-          </button>
-        </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="px-4 py-3 w-10">
-                  <input
-                    type="checkbox"
-                    checked={alunos.length > 0 && selected.size === alunos.length}
-                    ref={el => { if (el) el.indeterminate = selected.size > 0 && selected.size < alunos.length; }}
-                    onChange={toggleSelectAll}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-400"
-                    disabled={loading || alunos.length === 0}
-                  />
-                </th>
-                <th className="px-4 py-3 font-medium">Nome</th>
-                <th className="px-4 py-3 font-medium">Turma</th>
-                <th className="px-4 py-3 font-medium">Série</th>
-                <th className="px-4 py-3 font-medium">Faltas inj.</th>
-                <th className="px-4 py-3 font-medium">Responsáveis</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 w-10" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} cols={8} />)
-              ) : alunos.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
-                    Nenhum aluno encontrado.
-                  </td>
-                </tr>
-              ) : (
-                alunos.map(a => (
-                  <tr
-                    key={a.id}
-                    onClick={() => navigate('/alunos/' + a.id)}
-                    className={`cursor-pointer hover:bg-slate-50 transition-colors ${rowBorderStyle(a.faltas_injustificadas)}`}
-                  >
-                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(a.id)}
-                        onChange={() => toggleSelect(a.id)}
-                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-400"
-                      />
-                    </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{a.nome}</td>
-                    <td className="px-4 py-3 text-gray-600">{a.turma || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{a.serie || '—'}</td>
-                    <td className={faltasCellStyle(a.faltas_injustificadas)}>{a.faltas_injustificadas}</td>
-                    <td className="px-4 py-3">
-                      {a.total_responsaveis > 0 ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                          {a.total_responsaveis} cadastrado{a.total_responsaveis > 1 ? 's' : ''}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                          Sem responsável
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={riskBadgeStyle(a.faltas_injustificadas)}>
-                        {riskLabel(a.faltas_injustificadas)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                      <button
-                        onClick={e => handleDelete(e, a.id, a.nome)}
-                        className="text-red-400 hover:text-red-600 text-xs font-medium"
-                        title="Excluir"
-                      >
-                        Excluir
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <ConfirmModal
+        open={confirmBulk}
+        message={'Excluir ' + selected.size + ' aluno' + (selected.size !== 1 ? 's' : '') + '? Esta acao nao pode ser desfeita.'}
+        onConfirm={confirmBulkDelete}
+        onCancel={() => setConfirmBulk(false)}
+      />
+      <Toast toasts={toasts} />
+    </>
+  );
+}
+
+function AlunoDrawer({ aluno, onClose, onNavigate, onMessage }) {
+  const [detail, setDetail] = useState(null);
+
+  useEffect(() => {
+    api.aluno(aluno.id).then(setDetail).catch(() => {});
+  }, [aluno.id]);
+
+  const s = detail || aluno;
+  const risk = riskKey(s.faltas_injustificadas);
+  const ini = initials(s.nome);
+  const resps = s.responsaveis || [];
+  const monthly = Array.from({ length: 6 }, (_, m) => Math.max(0, Math.round(s.faltas_injustificadas / 6 * (0.4 + m * 0.12))));
+  const maxMonth = Math.max(1, ...monthly);
+
+  return (
+    <>
+      <div className="fb-drawer-mask" onClick={onClose} />
+      <div className="fb-drawer">
+        <div className="fb-drawer-head">
+          <div className="fb-row" style={{ gap: 12 }}>
+            <Avatar initials={ini} risk={risk} size={36} />
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 15 }}>{s.nome}</div>
+              <div className="fb-muted" style={{ fontSize: 12 }}>{s.turma} · {s.serie}</div>
+            </div>
+          </div>
+          <button className="fb-btn fb-btn-ghost fb-btn-sm" onClick={onClose}><I.X /></button>
+        </div>
+
+        <div className="fb-drawer-body">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
+            <div style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10 }}>
+              <div className="fb-muted-3" style={{ fontSize: 10.5, textTransform: 'uppercase', fontWeight: 500, letterSpacing: '.06em' }}>Faltas inj.</div>
+              <div className="fb-num" style={{ fontSize: 24, fontWeight: 500, marginTop: 4, color: risk === 'alto' ? 'var(--danger-text)' : undefined }}>{s.faltas_injustificadas}</div>
+            </div>
+            <div style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10 }}>
+              <div className="fb-muted-3" style={{ fontSize: 10.5, textTransform: 'uppercase', fontWeight: 500, letterSpacing: '.06em' }}>Ultima falta</div>
+              <div style={{ fontSize: 15, fontWeight: 500, marginTop: 4 }}>{s.ultima_falta ? new Date(s.ultima_falta).toLocaleDateString('pt-BR') : '-'}</div>
+            </div>
+            <div style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10 }}>
+              <div className="fb-muted-3" style={{ fontSize: 10.5, textTransform: 'uppercase', fontWeight: 500, letterSpacing: '.06em' }}>Status</div>
+              <div style={{ marginTop: 6 }}><RiskPill risk={risk} /></div>
+            </div>
+          </div>
+
+          <div className="fb-eyebrow">Tendencia (ultimos 6 meses)</div>
+          <div style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 24 }}>
+            <div className="fb-bars" style={{ height: 80 }}>
+              {monthly.map((v, i) => (
+                <div key={i} className={'fb-bar' + (v >= 3 ? ' danger' : '')} style={{ height: (v / maxMonth * 100) + '%' }} />
+              ))}
+            </div>
+            <div className="fb-row-between fb-muted-3" style={{ fontSize: 11, marginTop: 6 }}>
+              <span>Dez</span><span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span>
+            </div>
+          </div>
+
+          <div className="fb-row-between" style={{ marginBottom: 10 }}>
+            <div className="fb-eyebrow" style={{ margin: 0 }}>Responsaveis</div>
+            <button className="fb-btn fb-btn-ghost fb-btn-sm"><I.Plus /> Adicionar</button>
+          </div>
+
+          {resps.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
+              {resps.map((r, i) => (
+                <div key={i} className="fb-row" style={{ gap: 12, padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 999, background: 'var(--bg-alt)', display: 'grid', placeItems: 'center', color: 'var(--text-2)', flex: '0 0 34px' }}>
+                    <I.User size={16} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 500, fontSize: 13.5 }}>{r.nome}</div>
+                    <div className="fb-muted-3 fb-num" style={{ fontSize: 12 }}>{r.telefone || '-'}</div>
+                  </div>
+                  <button className="fb-btn fb-btn-ghost fb-btn-sm"><I.Whatsapp /></button>
+                  <button className="fb-btn fb-btn-ghost fb-btn-sm"><I.Phone /></button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: '14px 16px', border: '1px dashed var(--border-strong)', borderRadius: 10, marginBottom: 22, background: 'var(--danger-soft)' }}>
+              <div className="fb-row" style={{ gap: 10 }}>
+                <I.AlertOct size={16} style={{ color: 'var(--danger-text)', flex: '0 0 16px' }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500, color: 'var(--danger-text)' }}>Sem responsavel cadastrado</div>
+                  <div style={{ fontSize: 12, color: 'var(--danger-text)', opacity: 0.85, marginTop: 2 }}>Alertas automaticos nao serao enviados.</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(s.faltas || []).length > 0 && (
+            <>
+              <div className="fb-eyebrow">Historico recente</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {s.faltas.slice(0, 5).map((f, i) => (
+                  <div key={i} className="fb-row" style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, gap: 10 }}>
+                    <I.Calendar size={14} style={{ color: 'var(--text-3)' }} />
+                    <span style={{ flex: 1, fontSize: 13 }}>{new Date(f.data).toLocaleDateString('pt-BR')}</span>
+                    <span className={'fb-pill ' + (f.justificada ? 'fb-pill-success' : 'fb-pill-danger')}>
+                      <span className="fb-pill-dot" />{f.justificada ? 'Justificada' : 'Injustificada'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="fb-drawer-foot">
+          <button className="fb-btn fb-btn-secondary" onClick={onClose}>Fechar</button>
+          <button className="fb-btn fb-btn-secondary" onClick={onNavigate}><I.Eye /> Ver detalhe</button>
+          <button className="fb-btn fb-btn-primary" onClick={onMessage}><I.Send /> Enviar mensagem</button>
         </div>
       </div>
-
-      <p className="text-xs text-slate-400">{alunos.length} aluno{alunos.length !== 1 ? 's' : ''} encontrado{alunos.length !== 1 ? 's' : ''}</p>
-    </div>
     </>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div style={{ padding: '56px 24px', textAlign: 'center', color: 'var(--text-2)' }}>
+      <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--primary-soft)', color: 'var(--primary)', display: 'inline-grid', placeItems: 'center', marginBottom: 14 }}>
+        <I.Search size={20} />
+      </div>
+      <div style={{ fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>Nenhum aluno encontrado</div>
+      <div>Tente ajustar os filtros ou termo de busca.</div>
+    </div>
   );
 }

@@ -56,17 +56,15 @@ async function initSchema() {
 
 // Returns { id, novo: boolean }
 async function upsertAluno({ nome, numero, turma = '', serie = '', curso = '' }) {
-  const select = await pool.query(
-    'SELECT id FROM alunos WHERE nome = $1 AND turma = $2 AND serie = $3 AND curso = $4',
-    [nome, turma, serie, curso]
-  );
-  if (select.rows.length > 0) return { id: select.rows[0].id, novo: false };
-
-  const insert = await pool.query(
-    'INSERT INTO alunos (nome, numero, turma, serie, curso) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+  const result = await pool.query(
+    `INSERT INTO alunos (nome, numero, turma, serie, curso)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (nome, turma, serie, curso)
+     DO UPDATE SET numero = EXCLUDED.numero
+     RETURNING id, (xmax = 0) AS novo`,
     [nome, numero ?? null, turma, serie, curso]
   );
-  return { id: insert.rows[0].id, novo: true };
+  return { id: result.rows[0].id, novo: result.rows[0].novo };
 }
 
 // Returns true if a new record was inserted, false if already existed
@@ -127,7 +125,7 @@ async function getAlunos({ q, turma, serie, curso, risco } = {}) {
 
   let having = '';
   if (risco === 'alto') having = 'HAVING COUNT(f.id) FILTER (WHERE f.justificada = FALSE) >= 10';
-  else if (risco === 'medio') having = 'HAVING COUNT(f.id) FILTER (WHERE f.justificada = FALSE) >= 5';
+  else if (risco === 'risco' || risco === 'medio') having = 'HAVING COUNT(f.id) FILTER (WHERE f.justificada = FALSE) >= 5 AND COUNT(f.id) FILTER (WHERE f.justificada = FALSE) < 10';
 
   const result = await pool.query(`
     SELECT

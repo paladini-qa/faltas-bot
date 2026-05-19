@@ -4,6 +4,7 @@ import { api } from '../api.js';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
+import { RiskPill } from '../components/atoms.jsx';
 
 function groupByDisciplina(faltas) {
   return faltas.reduce((acc, f) => {
@@ -21,63 +22,32 @@ function formatDate(iso) {
 
 function LoadingSkeleton() {
   return (
-    <div className="p-6 space-y-6">
-      <div className="space-y-2">
-        <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
-        <div className="h-8 w-64 bg-slate-200 rounded animate-pulse" />
-        <div className="flex gap-2">
-          <div className="h-5 w-20 bg-slate-200 rounded animate-pulse" />
-          <div className="h-5 w-16 bg-slate-200 rounded animate-pulse" />
-          <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
+    <div className="fb-main" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ height: 14, width: 96, background: 'var(--border)', borderRadius: 6, animation: 'pulse 1.5s infinite' }} />
+        <div style={{ height: 28, width: 256, background: 'var(--border)', borderRadius: 6, animation: 'pulse 1.5s infinite' }} />
+        <div className="fb-row" style={{ gap: 8 }}>
+          <div style={{ height: 20, width: 80, background: 'var(--border)', borderRadius: 999, animation: 'pulse 1.5s infinite' }} />
+          <div style={{ height: 20, width: 64, background: 'var(--border)', borderRadius: 999, animation: 'pulse 1.5s infinite' }} />
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-6 items-start">
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden p-4 space-y-3">
-          <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
-          <div className="h-12 bg-slate-100 rounded animate-pulse" />
-          <div className="h-12 bg-slate-100 rounded animate-pulse" />
-          <div className="h-10 bg-slate-200 rounded animate-pulse" />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 24 }}>
+        <div className="fb-card fb-card-pad" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ height: 20, width: 128, background: 'var(--border)', borderRadius: 6, animation: 'pulse 1.5s infinite' }} />
+          <div style={{ height: 48, background: 'var(--bg-alt)', borderRadius: 10, animation: 'pulse 1.5s infinite' }} />
+          <div style={{ height: 48, background: 'var(--bg-alt)', borderRadius: 10, animation: 'pulse 1.5s infinite' }} />
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden p-4 space-y-3">
-          <div className="h-5 w-40 bg-slate-200 rounded animate-pulse" />
-          <div className="h-24 bg-slate-100 rounded animate-pulse" />
-          <div className="h-24 bg-slate-100 rounded animate-pulse" />
+        <div className="fb-card fb-card-pad" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ height: 20, width: 160, background: 'var(--border)', borderRadius: 6, animation: 'pulse 1.5s infinite' }} />
+          <div style={{ height: 96, background: 'var(--bg-alt)', borderRadius: 10, animation: 'pulse 1.5s infinite' }} />
         </div>
       </div>
     </div>
   );
 }
 
-function RiskBadge({ count }) {
-  if (count >= 10) {
-    return (
-      <span className="bg-red-100 text-red-700 font-semibold text-xs px-2 py-0.5 rounded">
-        🔴 {count} faltas injustificadas — Alto risco
-      </span>
-    );
-  }
-  if (count >= 5) {
-    return (
-      <span className="bg-orange-100 text-orange-700 font-semibold text-xs px-2 py-0.5 rounded">
-        🟠 {count} faltas injustificadas — Em risco
-      </span>
-    );
-  }
-  return (
-    <span className="bg-orange-50 text-orange-700 text-xs px-2 py-0.5 rounded">
-      {count} falta{count !== 1 ? 's' : ''} injustificada{count !== 1 ? 's' : ''}
-    </span>
-  );
-}
-
-function AbsenceCountLabel({ count }) {
-  if (count >= 10) {
-    return <span className="text-xs font-semibold text-red-600">{count} faltas</span>;
-  }
-  if (count >= 5) {
-    return <span className="text-xs font-semibold text-orange-500">{count} faltas</span>;
-  }
-  return <span className="text-xs text-slate-500">{count} falta{count !== 1 ? 's' : ''}</span>;
+function riskKey(faltas) {
+  return faltas >= 10 ? 'alto' : faltas >= 5 ? 'risco' : 'regular';
 }
 
 export default function AlunoDetalhe() {
@@ -213,16 +183,21 @@ export default function AlunoDetalhe() {
   }
 
   if (loading) return <LoadingSkeleton />;
-  if (error) return <p className="p-6 text-red-600">{error}</p>;
+  if (error) return (
+    <div className="fb-main">
+      <p style={{ color: 'var(--danger-text)' }}>{error}</p>
+    </div>
+  );
   if (!aluno) return null;
 
   const grouped = groupByDisciplina(aluno.faltas || []);
   const totalFaltas = (aluno.faltas || []).length;
   const injustificadas = aluno.faltas_injustificadas ?? 0;
   const responsaveis = aluno.responsaveis || [];
+  const risk = riskKey(injustificadas);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="fb-main" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <Toast toasts={toasts} />
 
       <ConfirmModal
@@ -233,150 +208,160 @@ export default function AlunoDetalhe() {
       />
 
       {/* Page header */}
-      <div className="space-y-1">
-        <Link to="/alunos" className="text-indigo-600 text-sm hover:underline">← Alunos</Link>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <Link
+          to="/alunos"
+          style={{ color: 'var(--primary)', fontSize: 13, textDecoration: 'none', fontWeight: 500 }}
+        >
+          ← Alunos
+        </Link>
 
         {!editingAluno ? (
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">{aluno.nome}</h1>
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                {aluno.turma && <span className="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded">{aluno.turma}</span>}
-                {aluno.serie && <span className="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded">{aluno.serie}</span>}
-                {aluno.curso && <span className="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded">{aluno.curso}</span>}
-                <RiskBadge count={injustificadas} />
+          <div className="fb-row-between" style={{ alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <h1 className="fb-page-title">{aluno.nome}</h1>
+              <div className="fb-row" style={{ flexWrap: 'wrap', gap: 6 }}>
+                {aluno.turma && (
+                  <span className="fb-pill fb-pill-neutral">{aluno.turma}</span>
+                )}
+                {aluno.serie && (
+                  <span className="fb-pill fb-pill-neutral">{aluno.serie}</span>
+                )}
+                {aluno.curso && (
+                  <span className="fb-pill fb-pill-neutral">{aluno.curso}</span>
+                )}
+                <RiskPill risk={risk} />
+                <span className="fb-muted" style={{ fontSize: 12.5 }}>
+                  {injustificadas} falta{injustificadas !== 1 ? 's' : ''} injustificada{injustificadas !== 1 ? 's' : ''}
+                </span>
               </div>
             </div>
-            <div className="flex items-center gap-2 mt-1 shrink-0">
+            <div className="fb-row" style={{ gap: 8, flexShrink: 0, marginTop: 4 }}>
               <button
+                className="fb-btn fb-btn-ghost fb-btn-sm"
                 onClick={() => setEditingAluno(true)}
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
               >
                 Editar
               </button>
               <button
+                className="fb-btn fb-btn-danger fb-btn-sm"
                 onClick={handleDeleteAluno}
-                className="text-sm text-red-500 hover:text-red-700 font-medium"
               >
                 Excluir
               </button>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSaveAluno} className="space-y-3 max-w-lg">
-            <h2 className="text-lg font-bold text-slate-900">Editar aluno</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <label className="block text-xs text-slate-500 mb-1">Nome</label>
+          <form onSubmit={handleSaveAluno} style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>Editar aluno</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label className="fb-field-label">Nome</label>
                 <input
                   required
+                  className="fb-input"
                   value={alunoForm.nome}
                   onChange={e => setAlunoForm(f => ({ ...f, nome: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Turma</label>
+                <label className="fb-field-label">Turma</label>
                 <input
+                  className="fb-input"
                   value={alunoForm.turma}
                   onChange={e => setAlunoForm(f => ({ ...f, turma: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Série</label>
+                <label className="fb-field-label">Série</label>
                 <input
+                  className="fb-input"
                   value={alunoForm.serie}
                   onChange={e => setAlunoForm(f => ({ ...f, serie: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
               </div>
-              <div className="col-span-2">
-                <label className="block text-xs text-slate-500 mb-1">Curso</label>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label className="fb-field-label">Curso</label>
                 <input
+                  className="fb-input"
                   value={alunoForm.curso}
                   onChange={e => setAlunoForm(f => ({ ...f, curso: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                 />
               </div>
             </div>
-            <div className="flex gap-2">
-              <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Salvar</button>
-              <button type="button" onClick={() => setEditingAluno(false)} className="border border-slate-300 text-slate-600 px-4 py-2 rounded-lg text-sm">Cancelar</button>
+            <div className="fb-row" style={{ gap: 8 }}>
+              <button type="submit" className="fb-btn fb-btn-primary">Salvar</button>
+              <button type="button" className="fb-btn fb-btn-secondary" onClick={() => setEditingAluno(false)}>Cancelar</button>
             </div>
           </form>
         )}
       </div>
 
       {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-6 items-start">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 24, alignItems: 'start' }}>
 
         {/* LEFT: Guardians panel */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="fb-card" style={{ overflow: 'hidden' }}>
           {/* Card header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-            <span className="font-semibold text-slate-800 text-sm">Responsáveis</span>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-              responsaveis.length > 0
-                ? 'bg-green-100 text-green-700'
-                : 'bg-red-100 text-red-600'
-            }`}>
+          <div className="fb-card-head">
+            <span className="fb-card-title">Responsáveis</span>
+            <span className={`fb-pill ${responsaveis.length > 0 ? 'fb-pill-success' : 'fb-pill-danger'}`}>
               {responsaveis.length}
             </span>
           </div>
 
           {/* Guardian list */}
           {responsaveis.length === 0 ? (
-            <p className="text-sm text-slate-500 px-4 py-3">Nenhum responsável cadastrado.</p>
+            <p className="fb-muted" style={{ fontSize: 13, padding: '12px 20px' }}>Nenhum responsável cadastrado.</p>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
               {responsaveis.map(r => (
-                <li key={r.id} className="px-4 py-3 hover:bg-slate-50">
+                <li key={r.id} style={{ borderBottom: '1px solid var(--border)', padding: '12px 20px' }}>
                   {editingRespId === r.id ? (
-                    <div className="space-y-2">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <input
+                        className="fb-input"
                         value={respEditForm.nome}
                         onChange={e => setRespEditForm(f => ({ ...f, nome: e.target.value }))}
                         placeholder="Nome"
-                        className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                       />
                       <input
+                        className="fb-input"
                         value={respEditForm.telefone}
                         onChange={e => setRespEditForm(f => ({ ...f, telefone: e.target.value }))}
                         placeholder="Telefone"
-                        className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                       />
-                      <div className="flex gap-2">
+                      <div className="fb-row" style={{ gap: 8 }}>
                         <button
+                          className="fb-btn fb-btn-primary fb-btn-sm"
                           onClick={() => handleSaveResp(r.id)}
-                          className="text-xs bg-indigo-600 text-white px-3 py-1 rounded-lg font-medium"
                         >
                           Salvar
                         </button>
                         <button
+                          className="fb-btn fb-btn-secondary fb-btn-sm"
                           onClick={() => setEditingRespId(null)}
-                          className="text-xs text-slate-500 border border-slate-300 px-3 py-1 rounded-lg"
                         >
                           Cancelar
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between">
+                    <div className="fb-row-between">
                       <div>
-                        <p className="font-medium text-slate-900 text-sm">{r.nome}</p>
-                        <p className="text-xs text-slate-500">{r.telefone}</p>
+                        <p style={{ fontWeight: 500, margin: 0, fontSize: 13.5 }}>{r.nome}</p>
+                        <p className="fb-muted-3" style={{ margin: 0, fontSize: 12.5, fontFamily: 'var(--font-mono)' }}>{r.telefone}</p>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="fb-row" style={{ gap: 8 }}>
                         <button
+                          className="fb-btn fb-btn-ghost fb-btn-sm"
                           onClick={() => { setEditingRespId(r.id); setRespEditForm({ nome: r.nome, telefone: r.telefone }); }}
-                          className="text-indigo-500 hover:text-indigo-700 text-xs font-medium"
                         >
                           Editar
                         </button>
                         <button
+                          className="fb-btn fb-btn-danger fb-btn-sm"
                           onClick={() => handleDeleteResp(r.id)}
-                          className="text-red-500 hover:text-red-700 text-xs font-medium"
                         >
                           Remover
                         </button>
@@ -389,35 +374,34 @@ export default function AlunoDetalhe() {
           )}
 
           {/* Add form */}
-          <div className="bg-slate-50 border-t border-slate-100 px-4 py-4">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-              Adicionar responsável
-            </p>
-            <form onSubmit={addResponsavel} className="space-y-2">
+          <div style={{ background: 'var(--surface-2)', borderTop: '1px solid var(--border)', padding: '16px 20px' }}>
+            <p className="fb-eyebrow" style={{ marginBottom: 12 }}>Adicionar responsável</p>
+            <form onSubmit={addResponsavel} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Nome</label>
+                <label className="fb-field-label">Nome</label>
                 <input
                   required
+                  className="fb-input"
                   value={form.nome}
                   onChange={e => setForm(f => ({ ...f, nome: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   placeholder="Nome do responsável"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Telefone WhatsApp</label>
+                <label className="fb-field-label">Telefone WhatsApp</label>
                 <input
                   required
+                  className="fb-input"
                   value={form.telefone}
                   onChange={e => setForm(f => ({ ...f, telefone: e.target.value }))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
                   placeholder="5545999999999"
                 />
               </div>
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                className="fb-btn fb-btn-primary"
+                style={{ width: '100%', justifyContent: 'center' }}
               >
                 {saving ? 'Salvando...' : 'Adicionar'}
               </button>
@@ -426,82 +410,96 @@ export default function AlunoDetalhe() {
         </div>
 
         {/* RIGHT: Absences by subject */}
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div className="fb-card" style={{ overflow: 'hidden' }}>
           {/* Card header */}
-          <div className="px-4 py-3 border-b border-slate-100">
-            <span className="font-semibold text-slate-800 text-sm">Faltas por disciplina</span>
-            <p className="text-xs text-slate-500 mt-0.5">
+          <div className="fb-card-head" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+            <span className="fb-card-title">Faltas por disciplina</span>
+            <p className="fb-muted-3" style={{ margin: 0, fontSize: 12.5 }}>
               {totalFaltas} total · {injustificadas} injustificada{injustificadas !== 1 ? 's' : ''}
             </p>
           </div>
 
           {Object.keys(grouped).length === 0 ? (
-            <p className="text-sm text-slate-500 px-4 py-4">Nenhuma falta registrada.</p>
+            <p className="fb-muted" style={{ fontSize: 13, padding: '16px 20px' }}>Nenhuma falta registrada.</p>
           ) : (
-            <div className="divide-y divide-slate-100">
-              {Object.entries(grouped).map(([disciplina, faltas]) => (
-                <div key={disciplina} className="px-4 py-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-slate-800 text-sm">{disciplina}</span>
+            <div>
+              {Object.entries(grouped).map(([disciplina, faltas], gi) => (
+                <div
+                  key={disciplina}
+                  style={{ padding: '12px 20px', borderBottom: gi < Object.keys(grouped).length - 1 ? '1px solid var(--border)' : 'none' }}
+                >
+                  <div className="fb-row-between" style={{ marginBottom: 8 }}>
+                    <span style={{ fontWeight: 600, fontSize: 13.5 }}>{disciplina}</span>
                     <AbsenceCountLabel count={faltas.length} />
                   </div>
-                  <div className="space-y-1">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {faltas.map(f => (
                       <div key={f.id}>
                         {editingFaltaId === f.id ? (
-                          <div className="flex flex-wrap items-center gap-2 py-1">
+                          <div className="fb-row" style={{ flexWrap: 'wrap', gap: 8, padding: '4px 0' }}>
                             <input
                               type="date"
+                              className="fb-input"
+                              style={{ width: 'auto', flex: '0 0 auto' }}
                               value={faltaEditForm.data?.slice(0, 10) || ''}
                               onChange={e => setFaltaEditForm(x => ({ ...x, data: e.target.value }))}
-                              className="border border-slate-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
                             />
                             <input
+                              className="fb-input"
+                              style={{ width: 120, flex: '0 0 auto' }}
                               value={faltaEditForm.disciplina}
                               onChange={e => setFaltaEditForm(x => ({ ...x, disciplina: e.target.value }))}
                               placeholder="Disciplina"
-                              className="border border-slate-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 w-28"
                             />
-                            <label className="flex items-center gap-1 text-xs text-slate-600">
+                            <label className="fb-row" style={{ gap: 6, fontSize: 13, cursor: 'pointer' }}>
                               <input
                                 type="checkbox"
                                 checked={faltaEditForm.justificada}
                                 onChange={e => setFaltaEditForm(x => ({ ...x, justificada: e.target.checked }))}
-                                className="accent-indigo-600"
                               />
                               Justificada
                             </label>
                             <button
+                              className="fb-btn fb-btn-primary fb-btn-sm"
                               onClick={() => handleSaveFalta(f.id)}
-                              className="text-xs bg-indigo-600 text-white px-2 py-1 rounded font-medium"
                             >
                               Salvar
                             </button>
                             <button
+                              className="fb-btn fb-btn-secondary fb-btn-sm"
                               onClick={() => setEditingFaltaId(null)}
-                              className="text-xs text-slate-500 border border-slate-300 px-2 py-1 rounded"
                             >
                               Cancelar
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-between group py-0.5">
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${f.justificada ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          <div
+                            className="fb-row-between"
+                            style={{ padding: '2px 0' }}
+                            onMouseEnter={e => e.currentTarget.querySelector('.falta-actions').style.opacity = '1'}
+                            onMouseLeave={e => e.currentTarget.querySelector('.falta-actions').style.opacity = '0'}
+                          >
+                            <div className="fb-row" style={{ gap: 8 }}>
+                              <span className={`fb-pill ${f.justificada ? 'fb-pill-success' : 'fb-pill-danger'}`} style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
                                 {formatDate(f.data)}
                               </span>
-                              {f.justificada && <span className="text-xs text-green-600">Justificada</span>}
+                              {f.justificada && (
+                                <span className="fb-muted" style={{ fontSize: 12 }}>Justificada</span>
+                              )}
                             </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div
+                              className="falta-actions fb-row"
+                              style={{ gap: 8, opacity: 0, transition: 'opacity .15s' }}
+                            >
                               <button
+                                className="fb-btn fb-btn-ghost fb-btn-sm"
                                 onClick={() => { setEditingFaltaId(f.id); setFaltaEditForm({ data: f.data?.slice(0, 10) || '', disciplina: f.disciplina || '', justificada: f.justificada || false }); }}
-                                className="text-xs text-indigo-500 hover:text-indigo-700"
                               >
                                 Editar
                               </button>
                               <button
+                                className="fb-btn fb-btn-danger fb-btn-sm"
                                 onClick={() => handleDeleteFalta(f.id)}
-                                className="text-xs text-red-500 hover:text-red-700"
                               >
                                 Remover
                               </button>
@@ -520,4 +518,14 @@ export default function AlunoDetalhe() {
       </div>
     </div>
   );
+}
+
+function AbsenceCountLabel({ count }) {
+  if (count >= 10) {
+    return <span className="fb-pill fb-pill-danger fb-num">{count} faltas</span>;
+  }
+  if (count >= 5) {
+    return <span className="fb-pill fb-pill-warning fb-num">{count} faltas</span>;
+  }
+  return <span className="fb-pill fb-pill-neutral fb-num">{count} falta{count !== 1 ? 's' : ''}</span>;
 }

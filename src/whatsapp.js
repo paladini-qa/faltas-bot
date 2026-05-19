@@ -9,6 +9,10 @@ function createClient() {
   client = new Client({
     authStrategy: new LocalAuth({ dataPath: '.wwebjs_auth' }),
     puppeteer: { args: ['--no-sandbox', '--disable-setuid-sandbox'] },
+    webVersionCache: {
+      type: 'remote',
+      remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+    },
   });
 
   client.on('qr', async qr => {
@@ -32,8 +36,11 @@ function createClient() {
     console.log('[WhatsApp] Desconectado:', reason);
   });
 
-  client.initialize().catch(err => {
+  client.initialize().catch(async err => {
     console.error('[WhatsApp] Falha ao inicializar:', err.message);
+    // Wait and retry once — handles transient "No LID" errors on reconnect
+    await new Promise(r => setTimeout(r, 5000));
+    if (client) client.initialize().catch(e => console.error('[WhatsApp] Retry falhou:', e.message));
   });
   return client;
 }
@@ -55,7 +62,18 @@ function getQrDataUrl() {
 async function sendMessage(telefone, mensagem) {
   if (!ready) throw new Error('Cliente WhatsApp não está conectado');
   const number = telefone.replace(/\D/g, '');
-  await client.sendMessage(`${number}@c.us`, mensagem);
+  const numberId = await client.getNumberId(number);
+  if (!numberId) throw new Error(`Número ${number} não está registrado no WhatsApp`);
+  await client.sendMessage(numberId._serialized, mensagem);
 }
 
-module.exports = { createClient, isClientReady, getStatus, getQrDataUrl, sendMessage };
+async function disconnect() {
+  if (client) {
+    ready = false;
+    qrDataUrl = null;
+    await client.destroy().catch(() => {});
+    client = null;
+  }
+}
+
+module.exports = { createClient, isClientReady, getStatus, getQrDataUrl, sendMessage, disconnect };

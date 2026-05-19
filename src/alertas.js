@@ -50,6 +50,42 @@ async function registrarAlerta(alunoId, tipo) {
   );
 }
 
+async function previewAlertas() {
+  const config = await getConfiguracoes();
+  const limiarConsecutivas = parseInt(config.threshold_consecutivas) || 3;
+  const limiarMensal = parseInt(config.threshold_mensal) || 5;
+
+  const alunosResult = await pool.query(`
+    SELECT
+      a.id, a.nome,
+      json_agg(
+        json_build_object('data', f.data)
+        ORDER BY f.data
+      ) FILTER (WHERE f.id IS NOT NULL AND f.justificada = FALSE) AS faltas
+    FROM alunos a
+    LEFT JOIN faltas f ON f.aluno_id = a.id
+    GROUP BY a.id, a.nome
+  `);
+
+  const pendentes = [];
+  for (const aluno of alunosResult.rows) {
+    const faltas = aluno.faltas || [];
+    const tipos = [];
+    if (temFaltasConsecutivas(faltas, limiarConsecutivas)) tipos.push('consecutivas');
+    if (temFaltasMensais(faltas, limiarMensal)) tipos.push('mensal');
+    for (const tipo of tipos) {
+      if (await alertaJaEnviado(aluno.id, tipo)) continue;
+      const respResult = await pool.query(
+        'SELECT nome, telefone FROM responsaveis WHERE aluno_id = $1',
+        [aluno.id]
+      );
+      if (respResult.rows.length === 0) continue;
+      pendentes.push({ aluno: aluno.nome, tipo, responsaveis: respResult.rows.length });
+    }
+  }
+  return pendentes;
+}
+
 async function avaliarEEnviarAlertas() {
   const config = await getConfiguracoes();
   const limiarConsecutivas = parseInt(config.threshold_consecutivas) || 3;
@@ -87,14 +123,14 @@ async function avaliarEEnviarAlertas() {
 
       if (respResult.rows.length === 0) continue;
 
+      await registrarAlerta(aluno.id, tipo);
+
       for (const resp of respResult.rows) {
         const template = tipo === 'consecutivas' ? templateConsecutivas : templateMensal;
         const faltasCount = tipo === 'consecutivas' ? limiarConsecutivas : limiarMensal;
         const msg = substituir(template, { responsavel: resp.nome, aluno: aluno.nome, faltas: faltasCount });
         await sendMessage(resp.telefone, msg);
       }
-
-      await registrarAlerta(aluno.id, tipo);
       enviados.push({ aluno: aluno.nome, tipo, responsaveis: respResult.rows.length });
     }
   }
@@ -102,4 +138,4 @@ async function avaliarEEnviarAlertas() {
   return enviados;
 }
 
-module.exports = { avaliarEEnviarAlertas };
+module.exports = { avaliarEEnviarAlertas, previewAlertas };

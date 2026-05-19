@@ -25,6 +25,7 @@ router.post('/', upload.single('pdf'), async (req, res) => {
   try {
     fs.renameSync(req.file.path, destPath);
     const result = await importarPdf(destPath);
+    fs.unlink(destPath, () => {}); // fire-and-forget, ignore errors
     res.json(result);
   } catch (err) {
     if (fs.existsSync(destPath)) fs.unlinkSync(destPath);

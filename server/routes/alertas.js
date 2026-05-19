@@ -1,10 +1,28 @@
 const router = require('express').Router();
 const { getAlertas, deleteAlerta } = require('../../src/db');
-const { isClientReady, getStatus, getQrDataUrl } = require('../../src/whatsapp');
-const { avaliarEEnviarAlertas } = require('../../src/alertas');
+const { isClientReady, getStatus, getQrDataUrl, disconnect } = require('../../src/whatsapp');
+const { avaliarEEnviarAlertas, previewAlertas } = require('../../src/alertas');
 
 router.get('/status', (req, res) => {
   res.json({ status: getStatus(), qr: getQrDataUrl() });
+});
+
+router.get('/preview', async (req, res) => {
+  try {
+    const pendentes = await previewAlertas();
+    res.json({ pendentes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/disconnect', async (req, res) => {
+  try {
+    await disconnect();
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.post('/enviar', async (req, res) => {
@@ -30,7 +48,10 @@ router.get('/', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const deleted = await deleteAlerta(parseInt(req.params.id));
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id) || id <= 0)
+      return res.status(400).json({ error: 'ID inválido' });
+    const deleted = await deleteAlerta(id);
     if (!deleted) return res.status(404).json({ error: 'Alerta não encontrado' });
     res.status(204).end();
   } catch (err) {

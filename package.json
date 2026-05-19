@@ -10,7 +10,6 @@
     "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "dependencies": {
-    "better-sqlite3": "^9.4.3",
     "dotenv": "^17.4.2",
     "pdf-parse": "^1.1.1",
     "pg": "^8.20.0",
