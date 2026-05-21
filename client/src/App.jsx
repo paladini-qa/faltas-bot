@@ -7,6 +7,7 @@ import Upload from './pages/Upload.jsx';
 import Alertas from './pages/Alertas.jsx';
 import Configuracoes from './pages/Configuracoes.jsx';
 import Mensagens from './pages/Mensagens.jsx';
+import Ajuda from './pages/Ajuda.jsx';
 import { WhatsappProvider } from './contexts/WhatsappContext.jsx';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/alertas" element={<Alertas />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/mensagens" element={<Mensagens />} />
+            <Route path="/ajuda" element={<Ajuda />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

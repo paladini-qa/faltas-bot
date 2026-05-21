@@ -9,6 +9,8 @@ COPY client/package.json client/package-lock.json* ./
 RUN npm ci
 
 COPY client/ ./
+ARG VITE_API_KEY
+ENV VITE_API_KEY=$VITE_API_KEY
 RUN npm run build
 
 

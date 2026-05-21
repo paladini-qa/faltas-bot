@@ -49,3 +49,5 @@ export const Arrow    = wrap(<><path d="M5 12h14M13 5l7 7-7 7"/></>);
 export const Refresh  = wrap(<><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></>);
 export const Dot      = wrap(<><circle cx="12" cy="12" r="2.2"/></>);
 export const QR       = wrap(<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v3M14 21h3"/></>);
+export const HelpCircle = wrap(<><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>);
+export const BookOpen   = wrap(<><path d="M2 7a2 2 0 0 1 2-2h7v16H4a2 2 0 0 1-2-2z"/><path d="M22 7a2 2 0 0 0-2-2h-7v16h7a2 2 0 0 0 2-2z"/><path d="M12 5v16"/></>);

@@ -8,7 +8,8 @@ const navItems = [
   { to: '/upload',       label: 'Importar PDF',  Icon: I.FileIcon, section: 'Painel' },
   { to: '/alertas',      label: 'Alertas',       Icon: I.Bell,     badge: true, section: 'Comunicação' },
   { to: '/mensagens',    label: 'Mensagens',     Icon: I.Inbox,    section: 'Comunicação' },
-  { to: '/configuracoes',label: 'Configurações', Icon: I.Cog,      section: 'Sistema' },
+  { to: '/configuracoes',label: 'Configurações', Icon: I.Cog,         section: 'Sistema' },
+  { to: '/ajuda',        label: 'Ajuda',         Icon: I.HelpCircle,  section: 'Sistema' },
 ];
 
 const sections = ['Painel', 'Comunicação', 'Sistema'];
