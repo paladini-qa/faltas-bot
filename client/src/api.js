@@ -81,6 +81,13 @@ export const api = {
       body: JSON.stringify(data),
     }).then(json),
 
+  createAluno: (data) =>
+    fetch(`${BASE}/alunos`, {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify(data),
+    }).then(json),
+
   updateAluno: (id, data) =>
     fetch(`${BASE}/alunos/${id}`, {
       method: 'PUT',

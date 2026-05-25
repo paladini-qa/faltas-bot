@@ -35,7 +35,23 @@ const PORT = process.env.PORT || 3001;
 
 initSchema()
   .then(() => {
-    app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      
+      // Auto open browser pointing to local frontend
+      const url = `http://localhost:${PORT}`;
+      try {
+        if (process.platform === 'win32') {
+          require('child_process').exec(`start ${url}`);
+        } else if (process.platform === 'darwin') {
+          require('child_process').exec(`open ${url}`);
+        } else {
+          require('child_process').exec(`xdg-open ${url}`);
+        }
+      } catch (err) {
+        console.error('Failed to open browser automatically:', err.message);
+      }
+    });
     createClient();
   })
   .catch(err => { console.error('Failed to init schema:', err); process.exit(1); });

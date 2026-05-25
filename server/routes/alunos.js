@@ -1,11 +1,23 @@
 const router = require('express').Router();
-const { getAlunos, getAlunoById, insertResponsavel, getFiltros, updateAluno, deleteAluno, deleteAlunosBulk } = require('../../src/db');
+const { getAlunos, getAlunoById, insertResponsavel, getFiltros, updateAluno, deleteAluno, deleteAlunosBulk, upsertAluno } = require('../../src/db');
 
 router.get('/', async (req, res) => {
   try {
     const { q, turma, serie, curso, risco } = req.query;
     const alunos = await getAlunos({ q, turma, serie, curso, risco });
     res.json(alunos);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/', async (req, res) => {
+  try {
+    const { nome, numero, turma, serie, curso } = req.body;
+    if (!nome) return res.status(400).json({ error: 'nome é obrigatório' });
+    const { id, novo } = await upsertAluno({ nome, numero, turma, serie, curso });
+    const aluno = await getAlunoById(id);
+    res.status(novo ? 201 : 200).json(aluno);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

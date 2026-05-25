@@ -35,7 +35,7 @@ function extrairMeta(texto, nomeArquivo) {
   const turmaM = nomeArquivo.match(/-(Tarde|Manha|Noite|Manhã)-([A-Z])/i);
   const turma = turmaM ? `${turmaM[1]}-${turmaM[2]}` : ((texto.match(/TURMA:\s*(\S+)/i) || [])[1] || '');
 
-  const serie = (texto.match(/(\d+[ªa°])\s*s[eé]rie/i) || [])[1] || '';
+  const serie = (texto.match(/(\d[ªa°])\s*s[eé]rie/i) || [])[1] || '';
 
   const cursoM = texto.match(/TEC EM ([A-Z][A-Z\s]{2,30}?)(?:MEDIANEIRA|SERIAÇÃO|\n)/i);
   const curso = cursoM ? cursoM[1].trim() : '';

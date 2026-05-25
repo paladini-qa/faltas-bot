@@ -85,7 +85,7 @@ export default function Configuracoes() {
                     { label: 'Faltas consecutivas', desc: 'Faltas seguidas dentro de 3 dias uteis', key: 'threshold_consecutivas', def: 3 },
                     { label: 'Faltas em 30 dias', desc: 'Faltas injustificadas acumuladas no ultimo mes', key: 'threshold_mensal', def: 5 },
                   ].map((row, i) => {
-                    const v = cfg[row.key] ?? row.def;
+                    const v = Number(cfg[row.key] ?? row.def);
                     return (
                       <div key={row.key} className="fb-row-between" style={{ padding: '16px 0', borderBottom: i === 0 ? '1px solid var(--border)' : 'none' }}>
                         <div>
@@ -94,7 +94,29 @@ export default function Configuracoes() {
                         </div>
                         <div className="fb-row" style={{ gap: 8 }}>
                           <button className="fb-btn fb-btn-secondary fb-btn-sm" onClick={() => set(row.key, Math.max(1, v - 1))}>-</button>
-                          <div className="fb-num" style={{ fontWeight: 600, fontSize: 18, minWidth: 36, textAlign: 'center' }}>{v}</div>
+                          <input
+                            type="number"
+                            className="fb-input fb-num"
+                            min="1"
+                            style={{
+                              fontWeight: 600,
+                              fontSize: 18,
+                              width: 64,
+                              textAlign: 'center',
+                              padding: '4px 0',
+                              border: '1px solid var(--border)',
+                              borderRadius: 6,
+                            }}
+                            value={v}
+                            onChange={e => {
+                              const val = parseInt(e.target.value, 10);
+                              set(row.key, isNaN(val) ? '' : Math.max(1, val));
+                            }}
+                            onBlur={e => {
+                              const val = parseInt(e.target.value, 10);
+                              set(row.key, isNaN(val) || val < 1 ? row.def : val);
+                            }}
+                          />
                           <button className="fb-btn fb-btn-secondary fb-btn-sm" onClick={() => set(row.key, v + 1)}>+</button>
                         </div>
                       </div>

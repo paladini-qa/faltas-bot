@@ -1,5 +1,10 @@
 const router = require('express').Router();
-const { pool } = require('../../src/db');
+const { 
+  getAlunoStatsParaMensagem, 
+  getResponsaveisPorAluno, 
+  getResponsaveisETurmaStats, 
+  registrarAlerta 
+} = require('../../src/db');
 const { sendMessage, isClientReady } = require('../../src/whatsapp');
 
 function substituir(template, { responsavel, aluno, faltas }) {
@@ -26,25 +31,13 @@ router.post('/enviar', async (req, res) => {
   try {
     if (alunoId) {
       // Aluno mode
-      const alunoRes = await pool.query(
-        `SELECT a.nome,
-           COUNT(f.id) FILTER (WHERE f.justificada = FALSE)::int AS faltas_injustificadas
-         FROM alunos a
-         LEFT JOIN faltas f ON f.aluno_id = a.id
-         WHERE a.id = $1
-         GROUP BY a.id`,
-        [alunoId]
-      );
-      if (alunoRes.rows.length === 0) return res.status(404).json({ error: 'Aluno não encontrado' });
-      const aluno = alunoRes.rows[0];
+      const aluno = await getAlunoStatsParaMensagem(alunoId);
+      if (!aluno) return res.status(404).json({ error: 'Aluno não encontrado' });
 
-      const respRes = await pool.query(
-        'SELECT nome, telefone FROM responsaveis WHERE aluno_id = $1',
-        [alunoId]
-      );
+      const responsaveisRaw = await getResponsaveisPorAluno(alunoId);
       const responsaveis = telefonesSelecionados
-        ? respRes.rows.filter(r => telefonesSelecionados.includes(r.telefone))
-        : respRes.rows;
+        ? responsaveisRaw.filter(r => telefonesSelecionados.includes(r.telefone))
+        : responsaveisRaw;
 
       for (const resp of responsaveis) {
         const msg = substituir(mensagemTemplate, {
@@ -61,28 +54,15 @@ router.post('/enviar', async (req, res) => {
       }
 
       if (enviados.length > 0) {
-        await pool.query(
-          'INSERT INTO alertas_enviados (aluno_id, tipo_alerta) VALUES ($1, $2)',
-          [alunoId, 'manual']
-        );
+        await registrarAlerta(alunoId, 'manual');
       }
 
     } else if (turma) {
       // Turma mode
-      const rows = await pool.query(
-        `SELECT a.id AS aluno_id, a.nome AS aluno_nome,
-           COUNT(f.id) FILTER (WHERE f.justificada = FALSE)::int AS faltas_injustificadas,
-           r.nome AS resp_nome, r.telefone AS resp_telefone
-         FROM alunos a
-         JOIN responsaveis r ON r.aluno_id = a.id
-         LEFT JOIN faltas f ON f.aluno_id = a.id
-         WHERE a.turma = $1
-         GROUP BY a.id, a.nome, r.id, r.nome, r.telefone`,
-        [turma]
-      );
+      const rows = await getResponsaveisETurmaStats(turma);
 
       const alunosRegistrados = new Set();
-      for (const row of rows.rows) {
+      for (const row of rows) {
         const msg = substituir(mensagemTemplate, {
           responsavel: row.resp_nome,
           aluno: row.aluno_nome,
@@ -92,10 +72,7 @@ router.post('/enviar', async (req, res) => {
           await sendMessage(row.resp_telefone, msg);
           enviados.push(row.resp_telefone);
           if (!alunosRegistrados.has(row.aluno_id)) {
-            await pool.query(
-              'INSERT INTO alertas_enviados (aluno_id, tipo_alerta) VALUES ($1, $2)',
-              [row.aluno_id, 'manual']
-            );
+            await registrarAlerta(row.aluno_id, 'manual');
             alunosRegistrados.add(row.aluno_id);
           }
         } catch (e) {

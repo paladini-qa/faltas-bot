@@ -4,8 +4,17 @@ const path = require('path');
 const fs = require('fs');
 const { importarPdf } = require('../../src/importar');
 
+const isPackaged = typeof process.pkg !== 'undefined';
+const baseDir = isPackaged ? path.dirname(process.execPath) : path.resolve(__dirname, '../../');
+const uploadDir = path.join(baseDir, 'data/uploads');
+
+// Ensure upload directory exists physically
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const upload = multer({
-  dest: path.resolve(__dirname, '../../data/uploads'),
+  dest: uploadDir,
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf' || file.originalname.endsWith('.pdf')) {
       cb(null, true);

@@ -1,8 +1,47 @@
+# Node / dependencies
 node_modules/
+client/node_modules/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
 data/
+
+# Environment files & Secrets
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# WhatsApp session caches
 .wwebjs_auth/
 .wwebjs_cache/
+
+# Build outputs
+client/dist/
+dist/
+dist-win/
+
+# Packaged distribution files
+*.zip
+*.tar.gz
+
+# IDEs & Editor configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# AI Agents & Local tools
 .superpowers/
 .claude/
+.antigravitycli/
 
+# Operating System files
+.DS_Store
+Thumbs.db

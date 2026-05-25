@@ -18,6 +18,9 @@ export default function Alunos() {
   const [drawer, setDrawer] = useState(null);
   const [confirmBulk, setConfirmBulk] = useState(false);
   const { toasts, toast } = useToast();
+  const [showNovoAlunoModal, setShowNovoAlunoModal] = useState(false);
+  const [novoAlunoForm, setNovoAlunoForm] = useState({ nome: '', turma: '', serie: '', curso: '', numero: '' });
+  const [createloading, setCreateLoading] = useState(false);
 
   const q     = params.get('q') || '';
   const turma = params.get('turma') || '';
@@ -78,7 +81,7 @@ export default function Alunos() {
           </div>
           <div className="fb-row">
             <button className="fb-btn fb-btn-secondary"><I.Download /> Exportar</button>
-            <button className="fb-btn fb-btn-primary"><I.UserPlus /> Novo aluno</button>
+            <button className="fb-btn fb-btn-primary" onClick={() => setShowNovoAlunoModal(true)}><I.UserPlus /> Novo aluno</button>
           </div>
         </div>
 
@@ -228,6 +231,46 @@ export default function Alunos() {
         onConfirm={confirmBulkDelete}
         onCancel={() => setConfirmBulk(false)}
       />
+
+      {showNovoAlunoModal && (
+        <NovoAlunoModal
+          open={showNovoAlunoModal}
+          onClose={() => {
+            setShowNovoAlunoModal(false);
+            setNovoAlunoForm({ nome: '', turma: '', serie: '', curso: '', numero: '' });
+          }}
+          form={novoAlunoForm}
+          setForm={setNovoAlunoForm}
+          saving={createloading}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setCreateLoading(true);
+            try {
+              await api.createAluno({
+                nome: novoAlunoForm.nome,
+                turma: novoAlunoForm.turma,
+                serie: novoAlunoForm.serie,
+                curso: novoAlunoForm.curso,
+                numero: novoAlunoForm.numero ? parseInt(novoAlunoForm.numero, 10) : null
+              });
+              toast.success('Aluno cadastrado com sucesso!');
+              setShowNovoAlunoModal(false);
+              setNovoAlunoForm({ nome: '', turma: '', serie: '', curso: '', numero: '' });
+              // Refresh lists
+              setLoading(true);
+              api.alunos({ q, turma, serie, risco })
+                .then(d => { setAlunos(d); setLoading(false); })
+                .catch(() => setLoading(false));
+              api.filtros().then(setFiltros).catch(() => {});
+            } catch (err) {
+              toast.error(err.message);
+            } finally {
+              setCreateLoading(false);
+            }
+          }}
+        />
+      )}
+
       <Toast toasts={toasts} />
     </>
   );
@@ -235,9 +278,17 @@ export default function Alunos() {
 
 function AlunoDrawer({ aluno, onClose, onNavigate, onMessage }) {
   const [detail, setDetail] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [form, setForm] = useState({ nome: '', telefone: '' });
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const loadDetail = () => {
+    api.aluno(aluno.id).then(setDetail).catch(() => {});
+  };
 
   useEffect(() => {
-    api.aluno(aluno.id).then(setDetail).catch(() => {});
+    loadDetail();
   }, [aluno.id]);
 
   const s = detail || aluno;
@@ -292,8 +343,72 @@ function AlunoDrawer({ aluno, onClose, onNavigate, onMessage }) {
 
           <div className="fb-row-between" style={{ marginBottom: 10 }}>
             <div className="fb-eyebrow" style={{ margin: 0 }}>Responsaveis</div>
-            <button className="fb-btn fb-btn-ghost fb-btn-sm"><I.Plus /> Adicionar</button>
+            <button className="fb-btn fb-btn-ghost fb-btn-sm" onClick={() => setShowAddForm(!showAddForm)}>
+              <I.Plus /> Adicionar
+            </button>
           </div>
+
+          {showAddForm && (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setSaving(true);
+                try {
+                  await api.addResponsavel(s.id, form);
+                  setForm({ nome: '', telefone: '' });
+                  setShowAddForm(false);
+                  toast.success('Responsável cadastrado com sucesso!');
+                  loadDetail();
+                } catch (err) {
+                  toast.error(err.message);
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+                padding: '12px 14px',
+                border: '1px dashed var(--border-strong)',
+                borderRadius: 10,
+                marginBottom: 12,
+                background: 'var(--surface-2)'
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: 13 }}>Adicionar Responsável</div>
+              <div>
+                <label className="fb-field-label" style={{ fontSize: 11, marginBottom: 3 }}>Nome</label>
+                <input
+                  required
+                  className="fb-input fb-input-sm"
+                  placeholder="Nome do responsável"
+                  value={form.nome}
+                  onChange={e => setForm(prev => ({ ...prev, nome: e.target.value }))}
+                  style={{ fontSize: 12.5, padding: '6px 10px' }}
+                />
+              </div>
+              <div>
+                <label className="fb-field-label" style={{ fontSize: 11, marginBottom: 3 }}>WhatsApp</label>
+                <input
+                  required
+                  className="fb-input fb-input-sm"
+                  placeholder="Ex: 5545999999999"
+                  value={form.telefone}
+                  onChange={e => setForm(prev => ({ ...prev, telefone: e.target.value }))}
+                  style={{ fontSize: 12.5, padding: '6px 10px' }}
+                />
+              </div>
+              <div className="fb-row" style={{ gap: 8, marginTop: 4 }}>
+                <button type="submit" disabled={saving} className="fb-btn fb-btn-primary fb-btn-sm" style={{ fontSize: 12 }}>
+                  {saving ? 'Adicionando...' : 'Adicionar'}
+                </button>
+                <button type="button" className="fb-btn fb-btn-secondary fb-btn-sm" onClick={() => setShowAddForm(false)} style={{ fontSize: 12 }}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          )}
 
           {resps.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
@@ -359,6 +474,88 @@ function EmptyState() {
       </div>
       <div style={{ fontWeight: 500, color: 'var(--text)', marginBottom: 4 }}>Nenhum aluno encontrado</div>
       <div>Tente ajustar os filtros ou termo de busca.</div>
+    </div>
+  );
+}
+
+function NovoAlunoModal({ open, onClose, form, setForm, saving, onSubmit }) {
+  if (!open) return null;
+  return (
+    <div className="fb-modal-mask" onClick={onClose}>
+      <div className="fb-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+        <div className="fb-drawer-head" style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontWeight: 600, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <I.UserPlus size={18} style={{ color: 'var(--primary)' }} />
+            <span>Cadastrar Novo Aluno</span>
+          </div>
+          <button className="fb-btn fb-btn-ghost fb-btn-sm" onClick={onClose}><I.X /></button>
+        </div>
+        <form onSubmit={onSubmit}>
+          <div className="fb-drawer-body" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label className="fb-field-label" style={{ fontWeight: 500, marginBottom: 4, display: 'block', fontSize: 12 }}>Nome Completo *</label>
+              <input
+                required
+                className="fb-input"
+                placeholder="Ex: João Silva Santos"
+                value={form.nome}
+                onChange={e => setForm(prev => ({ ...prev, nome: e.target.value }))}
+              />
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label className="fb-field-label" style={{ fontWeight: 500, marginBottom: 4, display: 'block', fontSize: 12 }}>Nº Chamada (opcional)</label>
+                <input
+                  type="number"
+                  className="fb-input"
+                  placeholder="Ex: 12"
+                  value={form.numero}
+                  onChange={e => setForm(prev => ({ ...prev, numero: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="fb-field-label" style={{ fontWeight: 500, marginBottom: 4, display: 'block', fontSize: 12 }}>Turma</label>
+                <input
+                  className="fb-input"
+                  placeholder="Ex: Tarde-A"
+                  value={form.turma}
+                  onChange={e => setForm(prev => ({ ...prev, turma: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label className="fb-field-label" style={{ fontWeight: 500, marginBottom: 4, display: 'block', fontSize: 12 }}>Série</label>
+                <input
+                  className="fb-input"
+                  placeholder="Ex: 1ª série"
+                  value={form.serie}
+                  onChange={e => setForm(prev => ({ ...prev, serie: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="fb-field-label" style={{ fontWeight: 500, marginBottom: 4, display: 'block', fontSize: 12 }}>Curso</label>
+                <input
+                  className="fb-input"
+                  placeholder="Ex: Administração"
+                  value={form.curso}
+                  onChange={e => setForm(prev => ({ ...prev, curso: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="fb-drawer-foot" style={{ padding: '12px 20px', borderTop: '1px solid var(--border)' }}>
+            <button type="button" className="fb-btn fb-btn-secondary" onClick={onClose} disabled={saving}>
+              Cancelar
+            </button>
+            <button type="submit" className="fb-btn fb-btn-primary" disabled={saving}>
+              {saving ? 'Cadastrando...' : 'Salvar Aluno'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

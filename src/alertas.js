@@ -1,4 +1,10 @@
-const { pool, getConfiguracoes } = require('./db');
+const { 
+  getConfiguracoes,
+  alertaJaEnviado,
+  registrarAlerta,
+  getAlunosComFaltas,
+  getResponsaveisPorAluno
+} = require('./db');
 const { sendMessage } = require('./whatsapp');
 
 function substituir(template, { responsavel, aluno, faltas }) {
@@ -33,54 +39,24 @@ function temFaltasMensais(faltas, n) {
   return faltas.filter(f => new Date(f.data) >= limite).length >= n;
 }
 
-async function alertaJaEnviado(alunoId, tipo) {
-  const result = await pool.query(
-    `SELECT id FROM alertas_enviados
-     WHERE aluno_id = $1 AND tipo_alerta = $2
-       AND enviado_em > NOW() - INTERVAL '30 days'`,
-    [alunoId, tipo]
-  );
-  return result.rows.length > 0;
-}
-
-async function registrarAlerta(alunoId, tipo) {
-  await pool.query(
-    'INSERT INTO alertas_enviados (aluno_id, tipo_alerta) VALUES ($1, $2)',
-    [alunoId, tipo]
-  );
-}
-
 async function previewAlertas() {
   const config = await getConfiguracoes();
   const limiarConsecutivas = parseInt(config.threshold_consecutivas) || 3;
   const limiarMensal = parseInt(config.threshold_mensal) || 5;
 
-  const alunosResult = await pool.query(`
-    SELECT
-      a.id, a.nome,
-      json_agg(
-        json_build_object('data', f.data)
-        ORDER BY f.data
-      ) FILTER (WHERE f.id IS NOT NULL AND f.justificada = FALSE) AS faltas
-    FROM alunos a
-    LEFT JOIN faltas f ON f.aluno_id = a.id
-    GROUP BY a.id, a.nome
-  `);
+  const alunos = await getAlunosComFaltas();
 
   const pendentes = [];
-  for (const aluno of alunosResult.rows) {
+  for (const aluno of alunos) {
     const faltas = aluno.faltas || [];
     const tipos = [];
     if (temFaltasConsecutivas(faltas, limiarConsecutivas)) tipos.push('consecutivas');
     if (temFaltasMensais(faltas, limiarMensal)) tipos.push('mensal');
     for (const tipo of tipos) {
       if (await alertaJaEnviado(aluno.id, tipo)) continue;
-      const respResult = await pool.query(
-        'SELECT nome, telefone FROM responsaveis WHERE aluno_id = $1',
-        [aluno.id]
-      );
-      if (respResult.rows.length === 0) continue;
-      pendentes.push({ aluno: aluno.nome, tipo, responsaveis: respResult.rows.length });
+      const responsaveis = await getResponsaveisPorAluno(aluno.id);
+      if (responsaveis.length === 0) continue;
+      pendentes.push({ aluno: aluno.nome, tipo, responsaveis: responsaveis.length });
     }
   }
   return pendentes;
@@ -93,21 +69,11 @@ async function avaliarEEnviarAlertas() {
   const templateConsecutivas = config.template_consecutivas;
   const templateMensal = config.template_mensal;
 
-  const alunosResult = await pool.query(`
-    SELECT
-      a.id, a.nome,
-      json_agg(
-        json_build_object('data', f.data)
-        ORDER BY f.data
-      ) FILTER (WHERE f.id IS NOT NULL AND f.justificada = FALSE) AS faltas
-    FROM alunos a
-    LEFT JOIN faltas f ON f.aluno_id = a.id
-    GROUP BY a.id, a.nome
-  `);
+  const alunos = await getAlunosComFaltas();
 
   const enviados = [];
 
-  for (const aluno of alunosResult.rows) {
+  for (const aluno of alunos) {
     const faltas = aluno.faltas || [];
     const tipos = [];
     if (temFaltasConsecutivas(faltas, limiarConsecutivas)) tipos.push('consecutivas');
@@ -116,22 +82,19 @@ async function avaliarEEnviarAlertas() {
     for (const tipo of tipos) {
       if (await alertaJaEnviado(aluno.id, tipo)) continue;
 
-      const respResult = await pool.query(
-        'SELECT nome, telefone FROM responsaveis WHERE aluno_id = $1',
-        [aluno.id]
-      );
+      const responsaveis = await getResponsaveisPorAluno(aluno.id);
 
-      if (respResult.rows.length === 0) continue;
+      if (responsaveis.length === 0) continue;
 
       await registrarAlerta(aluno.id, tipo);
 
-      for (const resp of respResult.rows) {
+      for (const resp of responsaveis) {
         const template = tipo === 'consecutivas' ? templateConsecutivas : templateMensal;
         const faltasCount = tipo === 'consecutivas' ? limiarConsecutivas : limiarMensal;
         const msg = substituir(template, { responsavel: resp.nome, aluno: aluno.nome, faltas: faltasCount });
         await sendMessage(resp.telefone, msg);
       }
-      enviados.push({ aluno: aluno.nome, tipo, responsaveis: respResult.rows.length });
+      enviados.push({ aluno: aluno.nome, tipo, responsaveis: responsaveis.length });
     }
   }
 

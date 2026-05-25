@@ -1,14 +1,54 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const QRCode = require('qrcode');
+const fs = require('fs');
+const path = require('path');
 
 let client = null;
 let ready = false;
 let qrDataUrl = null;
 
+function getChromePath() {
+  if (process.platform !== 'win32') {
+    return null;
+  }
+  const paths = [
+    // Google Chrome
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
+    // Microsoft Edge
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+  ];
+
+  for (const p of paths) {
+    if (fs.existsSync(p)) {
+      return p;
+    }
+  }
+  return null;
+}
+
 function createClient() {
+  const chromePath = getChromePath();
+  const puppeteerOpts = {
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+  };
+  
+  if (chromePath) {
+    console.log(`[WhatsApp] Usando navegador local encontrado em: ${chromePath}`);
+    puppeteerOpts.executablePath = chromePath;
+  } else if (process.platform === 'win32') {
+    console.warn('[WhatsApp] ATENÇÃO: Google Chrome ou Microsoft Edge não foram encontrados nas pastas padrão do Windows. O WhatsApp Web pode falhar ao iniciar.');
+  }
+
+  const isPackaged = typeof process.pkg !== 'undefined';
+  const baseDir = isPackaged ? path.dirname(process.execPath) : '.';
+  const authDataPath = path.join(baseDir, '.wwebjs_auth');
+
   client = new Client({
-    authStrategy: new LocalAuth({ dataPath: '.wwebjs_auth' }),
-    puppeteer: { args: ['--no-sandbox', '--disable-setuid-sandbox'] },
+    authStrategy: new LocalAuth({ dataPath: authDataPath }),
+    puppeteer: puppeteerOpts,
     webVersionCache: {
       type: 'local',
     },
